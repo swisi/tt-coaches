@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Meine Übersicht - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Willkommen, {{ profile.first_name }} {{ profile.last_name }}</h1>
+        <hr>
+        
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h2 class="display-4">{{ certificates_count }}</h2>
+                        <p class="text-muted mb-0">Zertifikate</p>
+                        <a href="{{ url_for('coach.profile') }}" class="btn btn-sm btn-outline-primary mt-2">Alle anzeigen</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="text-muted mb-0">Profil</h5>
+                        <p class="mt-2 mb-0">
+                            {% if profile.first_name and profile.last_name %}
+                                <i class="text-success">Vollständig</i>
+                            {% else %}
+                                <i class="text-warning">Unvollständig</i>
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('coach.profile') }}" class="btn btn-sm btn-outline-primary mt-2">Profil bearbeiten</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="text-muted mb-0">CV</h5>
+                        <p class="mt-2 mb-0">
+                            {% if profile.cv_text or profile.cv_file_path %}
+                                <i class="text-success">Vorhanden</i>
+                            {% else %}
+                                <i class="text-warning">Nicht hochgeladen</i>
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('coach.profile') }}" class="btn btn-sm btn-outline-primary mt-2">CV bearbeiten</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Persönliche Informationen</h5>
+                        <a href="{{ url_for('coach.profile') }}" class="btn btn-sm btn-primary">Bearbeiten</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-3">
+                                {% if profile.profile_image_path %}
+                                    <img src="{{ url_for('coach.serve_file', filename=profile.profile_image_path) }}" 
+                                         alt="Profilbild" 
+                                         class="img-thumbnail rounded-circle" 
+                                         style="width: 120px; height: 120px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 120px; height: 120px; margin: 0 auto;">
+                                        <i class="text-muted" style="font-size: 3rem;">👤</i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <dl class="row mb-0">
+                                    {% if profile.license_number %}
+                                    <dt class="col-sm-5">Lizenznummer:</dt>
+                                    <dd class="col-sm-7"><strong>{{ profile.license_number }}</strong></dd>
+                                    {% endif %}
+                                    
+                                    <dt class="col-sm-5">Name:</dt>
+                                    <dd class="col-sm-7">{{ profile.first_name }} {{ profile.last_name }}</dd>
+                                    
+                                    <dt class="col-sm-5">E-Mail:</dt>
+                                    <dd class="col-sm-7">{{ profile.get_email_private() or '-' }}</dd>
+                                    
+                                    {% if profile.phone_private %}
+                                    <dt class="col-sm-5">Telefon privat:</dt>
+                                    <dd class="col-sm-7">{{ profile.phone_private }}</dd>
+                                    {% endif %}
+                                    
+                                    {% if profile.function_club %}
+                                    <dt class="col-sm-5">Funktion im Club:</dt>
+                                    <dd class="col-sm-7">{{ profile.function_club }}</dd>
+                                    {% endif %}
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Kürzliche Zertifikate</h5>
+                        <a href="{{ url_for('coach.profile') }}" class="btn btn-sm btn-primary">Alle anzeigen</a>
+                    </div>
+                    <div class="card-body">
+                        {% if certificates %}
+                            <ul class="list-group list-group-flush">
+                                {% for cert in certificates %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ cert.title }}</strong>
+                                        {% if cert.issuer %}<br><small class="text-muted">{{ cert.issuer }}</small>{% endif %}
+                                    </div>
+                                    {% if cert.issue_date %}
+                                    <small class="text-muted">{{ cert.issue_date.strftime('%d.%m.%Y') }}</small>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted mb-0">Noch keine Zertifikate vorhanden.</p>
+                            <a href="{{ url_for('coach.profile') }}" class="btn btn-sm btn-primary mt-2">Zertifikat hinzufügen</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="{{ url_for('coach.profile') }}" class="btn btn-primary">Profil bearbeiten</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

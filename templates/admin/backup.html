@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Backup - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Backup erstellen</h1>
+        <hr>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Vollständiges Backup</h5>
+                <p class="card-text">
+                    Erstellen Sie ein vollständiges Backup der Anwendung. Das Backup enthält:
+                </p>
+                <ul>
+                    <li><strong>Datenbank:</strong> Vollständiger SQL-Dump aller Tabellen und Daten</li>
+                    <li><strong>Dokumente:</strong> Alle hochgeladenen Dateien
+                        <ul>
+                            <li>Profilbilder</li>
+                            <li>Zertifikate</li>
+                            <li>Lebensläufe (CV-Dateien)</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <div class="alert alert-info">
+                    <strong>Hinweis:</strong> Das Backup wird als ZIP-Datei heruntergeladen. 
+                    Der Download startet automatisch nach dem Klick auf "Backup erstellen".
+                </div>
+                
+                <form method="POST" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\'></span> Backup wird erstellt...';">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16" style="vertical-align: -0.125em;">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                        </svg>
+                        Backup erstellen
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Wiederherstellung</h5>
+                <p class="card-text">
+                    Um ein Backup wiederherzustellen:
+                </p>
+                <ol>
+                    <li>Entpacken Sie die ZIP-Datei</li>
+                    <li><strong>Datenbank:</strong> Führen Sie die Datei <code>database.sql</code> in Ihrer MariaDB/MySQL-Datenbank aus:
+                        <pre class="bg-light p-2 mt-2"><code>mysql -u benutzername -p datenbankname &lt; database.sql</code></pre>
+                    </li>
+                    <li><strong>Dateien:</strong> Kopieren Sie den Inhalt des <code>uploads/</code> Verzeichnisses in das entsprechende Verzeichnis der Anwendung</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

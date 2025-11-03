@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Zertifikat bearbeiten - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Zertifikat bearbeiten</h1>
+        <p class="text-muted">Für Trainer: {{ trainer.first_name }} {{ trainer.last_name }}</p>
+        <hr>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {{ form.title(class="form-control") }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.title.errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.issuer.label(class="form-label") }}
+                        {{ form.issuer(class="form-control") }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.issue_date.label(class="form-label") }}
+                            {{ form.issue_date(class="form-control", type="date") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.expiry_date.label(class="form-label") }}
+                            {{ form.expiry_date(class="form-control", type="date") }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="4") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.file.label(class="form-label") }}
+                        {{ form.file(class="form-control") }}
+                        <small class="form-text text-muted">
+                            {% if certificate.file_path %}
+                                Aktuelle Datei: <a href="{{ url_for('admin.serve_file', filename=certificate.file_path) }}" target="_blank">Anzeigen</a><br>
+                            {% endif %}
+                            Erlaubte Formate: PDF, PNG, JPG, JPEG, GIF (max. 16 MB). Leer lassen, um die aktuelle Datei beizubehalten.
+                        </small>
+                        {% if form.file.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.file.errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+                        <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-secondary">Abbrechen</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

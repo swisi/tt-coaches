@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Coaching-Erfahrung hinzufügen - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Neue Coaching-Erfahrung hinzufügen</h1>
+        <hr>
+        
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.start_year.label(class="form-label") }}
+                            {{ form.start_year(class="form-control", type="number", min="1900", max="2100") }}
+                            {% if form.start_year.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.start_year.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.end_year.label(class="form-label") }}
+                            {{ form.end_year(class="form-control", type="number", min="1900", max="2100") }}
+                            <small class="form-text text-muted">Leer lassen für laufende Erfahrungen</small>
+                            {% if form.end_year.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.end_year.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.coaching_role.label(class="form-label") }}
+                        {{ form.coaching_role(class="form-select") }}
+                        {% if form.coaching_role.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.coaching_role.errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.team.label(class="form-label") }}
+                        {{ form.team(class="form-select") }}
+                        {% if form.team.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.team.errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Erfahrung speichern</button>
+                        <a href="{{ url_for('coach.profile') }}" class="btn btn-secondary">Abbrechen</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

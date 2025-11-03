@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Trainer bearbeiten - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Trainer bearbeiten: {{ trainer.first_name }} {{ trainer.last_name }}</h1>
+        <hr>
+        
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Persönliche Daten</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Profilbild und Name nebeneinander -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            {% if trainer.profile_image_path %}
+                                <img src="{{ url_for('admin.serve_file', filename=trainer.profile_image_path) }}" 
+                                     alt="Profilbild" 
+                                     class="img-thumbnail rounded-circle mb-2" 
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-2" 
+                                     style="width: 150px; height: 150px; margin: 0 auto;">
+                                    <i class="text-muted" style="font-size: 4rem;">👤</i>
+                                </div>
+                            {% endif %}
+                            <br>
+                            <!-- Profilbild-Upload-Formular (versteckt) -->
+                            <form method="POST" action="{{ url_for('admin.upload_profile_image', trainer_id=trainer.id) }}" enctype="multipart/form-data" id="profileImageForm" style="display: none;">
+                                <input type="file" name="profile_image" id="profileImageInput" accept="image/png,image/jpeg,image/jpg,image/gif" required style="display: none;">
+                            </form>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('profileImageInput').click();">
+                                Profilbild ändern
+                            </button>
+                            <script>
+                                document.getElementById('profileImageInput').addEventListener('change', function() {
+                                    if (this.files && this.files[0]) {
+                                        document.getElementById('profileImageForm').submit();
+                                    }
+                                });
+                            </script>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.first_name.label(class="form-label") }}
+                                    {{ form.first_name(class="form-control") }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.first_name.errors %}<div>{{ error }}</div>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form.last_name.label(class="form-label") }}
+                                    {{ form.last_name(class="form-control") }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.last_name.errors %}<div>{{ error }}</div>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                {{ form.license_number.label(class="form-label") }}
+                                {{ form.license_number(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.street.label(class="form-label") }}
+                        {{ form.street(class="form-control") }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form.postal_code.label(class="form-label") }}
+                            {{ form.postal_code(class="form-control") }}
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            {{ form.city.label(class="form-label") }}
+                            {{ form.city(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Kontaktinformationen</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.phone_private.label(class="form-label") }}
+                            {{ form.phone_private(class="form-control") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.phone_business.label(class="form-label") }}
+                            {{ form.phone_business(class="form-control") }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.email_private.label(class="form-label") }}
+                            {{ form.email_private(class="form-control", type="email") }}
+                            {% if form.email_private.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.email_private.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.email_business.label(class="form-label") }}
+                            {{ form.email_business(class="form-control", type="email") }}
+                            {% if form.email_business.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.email_business.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.function_club.label(class="form-label") }}
+                        {{ form.function_club(class="form-control") }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Coaching-Erfahrungen (CV)</h5>
+                    <a href="{{ url_for('admin.add_coaching_experience', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary">Neue Erfahrung hinzufügen</a>
+                </div>
+                <div class="card-body">
+                    {% if coaching_experiences %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Zeitraum</th>
+                                        <th>Coaching-Rolle</th>
+                                        <th>Team</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exp in coaching_experiences %}
+                                    <tr>
+                                        <td>{{ exp.start_year }} {% if exp.end_year %}- {{ exp.end_year }}{% else %}- <em>laufend</em>{% endif %}</td>
+                                        <td>{{ exp.coaching_role }}</td>
+                                        <td>{{ exp.team }}</td>
+                                        <td>
+                                            <a href="{{ url_for('admin.edit_coaching_experience', exp_id=exp.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
+                                            <form method="POST" action="{{ url_for('admin.delete_coaching_experience', exp_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diese Coaching-Erfahrung wirklich löschen?');">
+                                                <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Noch keine Coaching-Erfahrungen vorhanden. 
+                            <a href="{{ url_for('admin.add_coaching_experience', trainer_id=trainer.id) }}">Fügen Sie eine Erfahrung hinzu</a>.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Zertifikate</h5>
+                    <a href="{{ url_for('admin.add_certificate', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary">Neues Zertifikat hinzufügen</a>
+                </div>
+                <div class="card-body">
+                    {% if certificates %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Titel</th>
+                                        <th>Ausstellende Organisation</th>
+                                        <th>Ausstellungsdatum</th>
+                                        <th>Ablaufdatum</th>
+                                        <th>Datei</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cert in certificates %}
+                                    <tr>
+                                        <td>{{ cert.title }}</td>
+                                        <td>{{ cert.issuer or '-' }}</td>
+                                        <td>{{ cert.issue_date.strftime('%d.%m.%Y') if cert.issue_date else '-' }}</td>
+                                        <td>{{ cert.expiry_date.strftime('%d.%m.%Y') if cert.expiry_date else '-' }}</td>
+                                        <td>
+                                            <a href="{{ url_for('admin.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                Anzeigen
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('admin.edit_certificate', cert_id=cert.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
+                                            <form method="POST" action="{{ url_for('admin.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
+                                                <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% if cert.description %}
+                                    <tr>
+                                        <td colspan="6" class="text-muted small">{{ cert.description }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Noch keine Zertifikate vorhanden. 
+                            <a href="{{ url_for('admin.add_certificate', trainer_id=trainer.id) }}">Fügen Sie ein Zertifikat hinzu</a>.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Profil speichern</button>
+                <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-secondary">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
