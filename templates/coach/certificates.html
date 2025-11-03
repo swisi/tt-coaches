@@ -20,7 +20,7 @@
                             <th>Ausstellungsdatum</th>
                             <th>Ablaufdatum</th>
                             <th>Datei</th>
-                            <th>Aktionen</th>
+                            <th class="text-end">Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -31,14 +31,20 @@
                             <td>{{ cert.issue_date.strftime('%d.%m.%Y') if cert.issue_date else '-' }}</td>
                             <td>{{ cert.expiry_date.strftime('%d.%m.%Y') if cert.expiry_date else '-' }}</td>
                             <td>
-                                <a href="{{ url_for('coach.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    Anzeigen
-                                </a>
+                                <div class="d-flex justify-content-end">
+                                    <a href="{{ url_for('coach.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Datei anzeigen">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
                             </td>
                             <td>
-                                <form method="POST" action="{{ url_for('coach.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                                </form>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <form method="POST" action="{{ url_for('coach.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Löschen">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% if cert.description %}

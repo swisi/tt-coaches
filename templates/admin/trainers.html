@@ -29,8 +29,14 @@
                         <td>{{ trainer.certificates.count() }}</td>
                         <td>{{ trainer.created_at.strftime('%d.%m.%Y') }}</td>
                         <td>
-                            <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary">Details</a>
-                            <a href="{{ url_for('admin.edit_trainer', trainer_id=trainer.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary" title="Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('admin.edit_trainer', trainer_id=trainer.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

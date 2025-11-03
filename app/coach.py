@@ -46,13 +46,18 @@ def overview():
     # Statistik-Daten
     certificates_count = profile.certificates.count()
     certificates = profile.certificates.order_by(Certificate.issue_date.desc()).limit(5).all()
+    coaching_experiences_count = profile.coaching_experiences.count()
     
     # E-Mail privat vom User übernehmen falls nicht im Profil gesetzt
     if not profile.email_private and current_user.email:
         profile.email_private = current_user.email
         db.session.commit()
     
-    return render_template('coach/overview.html', profile=profile, certificates=certificates, certificates_count=certificates_count)
+    return render_template('coach/overview.html', 
+                         profile=profile, 
+                         certificates=certificates, 
+                         certificates_count=certificates_count,
+                         coaching_experiences_count=coaching_experiences_count)
 
 @bp.route('/profile', methods=['GET', 'POST'])
 @login_required

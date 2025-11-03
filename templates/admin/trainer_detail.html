@@ -93,10 +93,16 @@
                                     <td>{{ exp.coaching_role }}</td>
                                     <td>{{ exp.team }}</td>
                                     <td>
-                                        <a href="{{ url_for('admin.edit_coaching_experience', exp_id=exp.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
-                                        <form method="POST" action="{{ url_for('admin.delete_coaching_experience', exp_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diese Coaching-Erfahrung wirklich löschen?');">
-                                            <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                                        </form>
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <a href="{{ url_for('admin.edit_coaching_experience', exp_id=exp.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('admin.delete_coaching_experience', exp_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diese Coaching-Erfahrung wirklich löschen?');">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Löschen">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -138,15 +144,23 @@
                                     <td>{{ cert.issue_date.strftime('%d.%m.%Y') if cert.issue_date else '-' }}</td>
                                     <td>{{ cert.expiry_date.strftime('%d.%m.%Y') if cert.expiry_date else '-' }}</td>
                                     <td>
-                                        <a href="{{ url_for('admin.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            Anzeigen
-                                        </a>
+                                        <div class="d-flex justify-content-end">
+                                            <a href="{{ url_for('admin.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Datei anzeigen">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                     <td>
-                                        <a href="{{ url_for('admin.edit_certificate', cert_id=cert.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
-                                        <form method="POST" action="{{ url_for('admin.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
-                                            <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                                        </form>
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <a href="{{ url_for('admin.edit_certificate', cert_id=cert.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('admin.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Löschen">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% if cert.description %}

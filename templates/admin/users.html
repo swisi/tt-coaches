@@ -35,12 +35,18 @@
                         </td>
                         <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
                         <td>
-                            <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary">Details</a>
-                            {% if current_user.is_superadmin() or (not user.is_superadmin() and user.id != current_user.id) %}
-                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                                </form>
-                            {% endif %}
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if current_user.is_superadmin() or (not user.is_superadmin() and user.id != current_user.id) %}
+                                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Löschen">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

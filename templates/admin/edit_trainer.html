@@ -205,9 +205,11 @@
                                         <td>{{ cert.issue_date.strftime('%d.%m.%Y') if cert.issue_date else '-' }}</td>
                                         <td>{{ cert.expiry_date.strftime('%d.%m.%Y') if cert.expiry_date else '-' }}</td>
                                         <td>
-                                            <a href="{{ url_for('admin.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                Anzeigen
-                                            </a>
+                                            <div class="d-flex justify-content-end">
+                                                <a href="{{ url_for('admin.serve_file', filename=cert.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Datei anzeigen">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                         <td>
                                             <a href="{{ url_for('admin.edit_certificate', cert_id=cert.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
