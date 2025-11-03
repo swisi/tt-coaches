@@ -72,6 +72,10 @@
                                 {{ form.license_number.label(class="form-label") }}
                                 {{ form.license_number(class="form-control") }}
                             </div>
+                            <div class="mb-3">
+                                {{ form.function_club.label(class="form-label") }}
+                                {{ form.function_club(class="form-control") }}
+                            </div>
                         </div>
                     </div>
                     
@@ -129,11 +133,6 @@
                             {% endif %}
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        {{ form.function_club.label(class="form-label") }}
-                        {{ form.function_club(class="form-control") }}
-                    </div>
                 </div>
             </div>
             
@@ -150,6 +149,7 @@
                                     <tr>
                                         <th>Zeitraum</th>
                                         <th>Coaching-Rolle</th>
+                                        <th>Position</th>
                                         <th>Team</th>
                                         <th>Aktionen</th>
                                     </tr>
@@ -159,6 +159,7 @@
                                     <tr>
                                         <td>{{ exp.start_year }} {% if exp.end_year %}- {{ exp.end_year }}{% else %}- <em>laufend</em>{% endif %}</td>
                                         <td>{{ exp.coaching_role }}</td>
+                                        <td>{{ exp.position or '-' }}</td>
                                         <td>{{ exp.team }}</td>
                                         <td>
                                             <div class="d-flex justify-content-end gap-1">

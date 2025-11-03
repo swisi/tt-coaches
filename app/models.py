@@ -146,6 +146,20 @@ class CoachingExperience(db.Model):
         ('Ultimate Flag', 'Ultimate Flag')
     ]
     
+    # Positionen
+    POSITIONS = [
+        ('', ''),  # Leerer Wert für "Keine Auswahl"
+        ('Offense', 'Offense'),
+        ('Defense', 'Defense'),
+        ('Special Team', 'Special Team'),
+        ('Quarter Backs', 'Quarter Backs'),
+        ('Running Backs', 'Running Backs'),
+        ('Receiver', 'Receiver'),
+        ('Lineman', 'Lineman'),
+        ('Linebacker', 'Linebacker'),
+        ('Defensive Back', 'Defensive Back')
+    ]
+    
     id = db.Column(db.Integer, primary_key=True)
     trainer_profile_id = db.Column(db.Integer, db.ForeignKey('trainer_profiles.id'), nullable=False)
     
@@ -153,6 +167,7 @@ class CoachingExperience(db.Model):
     end_year = db.Column(db.Integer, nullable=True)  # Optional für laufende Erfahrungen
     coaching_role = db.Column(db.String(50), nullable=False)  # Eine der ROLES
     team = db.Column(db.String(50), nullable=False)  # Eines der TEAMS
+    position = db.Column(db.String(50), nullable=True)  # Eine der POSITIONS (optional)
     
     # Zeitstempel
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

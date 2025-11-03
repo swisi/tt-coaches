@@ -57,7 +57,7 @@ class TrainerProfileForm(FlaskForm):
     phone_business = StringField('Telefon geschäftlich', validators=[Optional(), Length(max=20)])
     email_private = StringField('E-Mail privat', validators=[Optional(), Email(), Length(max=120)])
     email_business = StringField('E-Mail geschäftlich', validators=[Optional(), Email(), Length(max=120)])
-    function_club = StringField('Funktion im Club', validators=[Optional(), Length(max=200)])
+    function_club = StringField('Aktuelle Funktion', validators=[Optional(), Length(max=200)])
     
     # CV
     cv_text = TextAreaField('Lebenslauf (Text)', validators=[Optional()])
@@ -69,6 +69,7 @@ class CoachingExperienceForm(FlaskForm):
     end_year = IntegerField('Endjahr (optional, leer lassen wenn laufend)', validators=[Optional(), NumberRange(min=1900, max=2100)])
     coaching_role = SelectField('Coaching-Rolle', choices=CoachingExperience.ROLES, validators=[DataRequired()])
     team = SelectField('Team', choices=CoachingExperience.TEAMS, validators=[DataRequired()])
+    position = SelectField('Position (optional)', choices=CoachingExperience.POSITIONS, validators=[Optional()])
     
     def validate_end_year(self, end_year):
         """Prüft ob Endjahr nach Startjahr liegt (nur wenn angegeben)"""

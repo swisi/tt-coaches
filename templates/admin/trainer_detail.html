@@ -35,6 +35,11 @@
                             <dd class="col-sm-8"><strong>{{ trainer.license_number }}</strong></dd>
                             {% endif %}
                             
+                            {% if trainer.function_club %}
+                            <dt class="col-sm-4">Aktuelle Funktion:</dt>
+                            <dd class="col-sm-8">{{ trainer.function_club }}</dd>
+                            {% endif %}
+                            
                             <dt class="col-sm-4">Name:</dt>
                             <dd class="col-sm-8">{{ trainer.first_name }} {{ trainer.last_name }}</dd>
                         </dl>
@@ -62,9 +67,6 @@
                     
                     <dt class="col-sm-3">E-Mail geschäftlich:</dt>
                     <dd class="col-sm-9">{{ trainer.email_business or '-' }}</dd>
-                    
-                    <dt class="col-sm-3">Funktion im Club:</dt>
-                    <dd class="col-sm-9">{{ trainer.function_club or '-' }}</dd>
                 </dl>
             </div>
         </div>
@@ -82,6 +84,7 @@
                                 <tr>
                                     <th>Zeitraum</th>
                                     <th>Coaching-Rolle</th>
+                                    <th>Position</th>
                                     <th>Team</th>
                                     <th>Aktionen</th>
                                 </tr>
@@ -91,6 +94,7 @@
                                 <tr>
                                     <td>{{ exp.start_year }} {% if exp.end_year %}- {{ exp.end_year }}{% else %}- <em>laufend</em>{% endif %}</td>
                                     <td>{{ exp.coaching_role }}</td>
+                                    <td>{{ exp.position or '-' }}</td>
                                     <td>{{ exp.team }}</td>
                                     <td>
                                         <div class="d-flex justify-content-end gap-1">

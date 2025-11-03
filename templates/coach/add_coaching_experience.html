@@ -46,6 +46,17 @@
                     </div>
                     
                     <div class="mb-3">
+                        {{ form.position.label(class="form-label") }}
+                        {{ form.position(class="form-select") }}
+                        <small class="form-text text-muted">Optional - kann leer bleiben</small>
+                        {% if form.position.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.position.errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
                         {{ form.team.label(class="form-label") }}
                         {{ form.team(class="form-select") }}
                         {% if form.team.errors %}
