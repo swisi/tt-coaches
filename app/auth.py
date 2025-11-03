@@ -4,7 +4,7 @@ Authentifizierungs-Blueprint
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Role, TrainerProfile
+from app.models import User, TrainerProfile
 from app.forms import LoginForm, RegisterForm
 
 bp = Blueprint('auth', __name__)
@@ -41,18 +41,12 @@ def register():
     
     form = RegisterForm()
     if form.validate_on_submit():
-        # Hole die Coach-Rolle
-        coach_role = Role.query.filter_by(name='coach').first()
-        if not coach_role:
-            flash('Registrierung momentan nicht möglich. Bitte kontaktieren Sie einen Administrator.', 'error')
-            return redirect(url_for('auth.register'))
-        
-        # Erstelle neuen Benutzer
+        # Erstelle neuen Benutzer direkt mit Coach-Flag
         user = User(
             username=form.username.data,
             email=form.email.data,
-            role_id=coach_role.id,
-            active=True
+            active=True,
+            is_coach=True  # Direkt als Coach registrieren
         )
         user.set_password(form.password.data)
         

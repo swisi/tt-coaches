@@ -8,8 +8,21 @@
         <h1>Trainer bearbeiten: {{ trainer.first_name }} {{ trainer.last_name }}</h1>
         <hr>
         
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
+            
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Bitte korrigieren Sie folgende Fehler:</strong>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items() %}
+                            {% for error in errors %}
+                                <li>{{ form[field].label.text }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
             
             <div class="card mb-4">
                 <div class="card-header">
@@ -31,20 +44,9 @@
                                 </div>
                             {% endif %}
                             <br>
-                            <!-- Profilbild-Upload-Formular (versteckt) -->
-                            <form method="POST" action="{{ url_for('admin.upload_profile_image', trainer_id=trainer.id) }}" enctype="multipart/form-data" id="profileImageForm" style="display: none;">
-                                <input type="file" name="profile_image" id="profileImageInput" accept="image/png,image/jpeg,image/jpg,image/gif" required style="display: none;">
-                            </form>
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('profileImageInput').click();">
                                 Profilbild ändern
                             </button>
-                            <script>
-                                document.getElementById('profileImageInput').addEventListener('change', function() {
-                                    if (this.files && this.files[0]) {
-                                        document.getElementById('profileImageForm').submit();
-                                    }
-                                });
-                            </script>
                         </div>
                         <div class="col-md-9">
                             <div class="row">
@@ -74,6 +76,11 @@
                             <div class="mb-3">
                                 {{ form.function_club.label(class="form-label") }}
                                 {{ form.function_club(class="form-control") }}
+                                {% if form.function_club.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.function_club.errors %}<div>{{ error }}</div>{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -247,6 +254,19 @@
                 <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-secondary">Abbrechen</a>
             </div>
         </form>
+        
+        <!-- Profilbild-Upload-Formular (außerhalb des Hauptformulars) -->
+        <form method="POST" action="{{ url_for('admin.upload_profile_image', trainer_id=trainer.id) }}" enctype="multipart/form-data" id="profileImageForm" style="display: none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}"/>
+            <input type="file" name="profile_image" id="profileImageInput" accept="image/png,image/jpeg,image/jpg,image/gif" required style="display: none;">
+        </form>
+        <script>
+            document.getElementById('profileImageInput').addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    document.getElementById('profileImageForm').submit();
+                }
+            });
+        </script>
     </div>
 </div>
 {% endblock %}

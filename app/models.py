@@ -7,20 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import desc
 from app import db
 
-class Role(db.Model):
-    """Rollen-Modell"""
-    __tablename__ = 'roles'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    
-    # Beziehungen
-    users = db.relationship('User', backref='role', lazy='dynamic')
-    
-    def __repr__(self):
-        return f'<Role {self.name}>'
-
 class User(UserMixin, db.Model):
     """Benutzer-Modell"""
     __tablename__ = 'users'
@@ -29,8 +15,13 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
+    
+    # Rollen-Flags für schnelle und stabile Prüfungen
+    is_superadmin = db.Column('is_superadmin', db.Boolean, default=False, nullable=False, index=True)
+    is_admin = db.Column('is_admin', db.Boolean, default=False, nullable=False, index=True)
+    is_coach = db.Column('is_coach', db.Boolean, default=False, nullable=False, index=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -45,17 +36,29 @@ class User(UserMixin, db.Model):
         """Passwort prüfen"""
         return check_password_hash(self.password_hash, password)
     
+    
+    def get_role_name(self):
+        """Gibt den Rollennamen zurück (für Anzeige)"""
+        if self.is_superadmin:
+            return 'superadmin'
+        elif self.is_admin:
+            return 'admin'
+        elif self.is_coach:
+            return 'coach'
+        return 'unbekannt'
+    
     def is_superadmin(self):
-        """Prüft ob Benutzer Superadministrator ist"""
-        return self.role.name == 'superadmin'
+        """Prüft ob Benutzer Superadministrator ist - direkt über Flag (stabil und schnell)"""
+        # Direkter Zugriff auf das Attribut über getattr um Rekursion zu vermeiden
+        return getattr(self, 'is_superadmin', False)
     
     def is_admin(self):
-        """Prüft ob Benutzer Administrator ist"""
-        return self.role.name == 'admin'
+        """Prüft ob Benutzer Administrator ist - direkt über Flag (stabil und schnell)"""
+        return getattr(self, 'is_admin', False)
     
     def is_coach(self):
-        """Prüft ob Benutzer Coach ist"""
-        return self.role.name == 'coach'
+        """Prüft ob Benutzer Coach ist - direkt über Flag (stabil und schnell)"""
+        return getattr(self, 'is_coach', False)
     
     def can_manage_users(self):
         """Prüft ob Benutzer andere Benutzer verwalten kann"""

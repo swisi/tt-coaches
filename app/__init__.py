@@ -15,6 +15,7 @@ login_manager = LoginManager()
 def load_user(user_id):
     """Lädt Benutzer für Flask-Login"""
     from app.models import User
+    # Lade Benutzer direkt (Rolle wird nicht mehr benötigt, da Flags verwendet werden)
     return User.query.get(int(user_id))
 
 def create_app(config_class=Config):

@@ -1,11 +1,11 @@
 """
 Admin-Blueprint (für Administratoren und Superadministratoren)
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory, send_file, make_response
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, TrainerProfile, Certificate, Role, CoachingExperience
-from app.forms import TrainerProfileForm, CertificateForm, CoachingExperienceForm
+from app.models import User, TrainerProfile, Certificate, CoachingExperience
+from app.forms import TrainerProfileForm, CertificateForm, CoachingExperienceForm, ChangeRoleForm
 from app.utils import save_uploaded_file, delete_file
 from app.backup_utils import create_full_backup
 from config import Config
@@ -64,8 +64,8 @@ def overview():
 @bp.route('/users')
 @login_required
 def users():
-    """Benutzer-Übersicht"""
-    result = require_admin()
+    """Benutzer-Übersicht (nur für Superadministratoren)"""
+    result = require_superadmin()
     if result:
         return result
     
@@ -75,8 +75,8 @@ def users():
 @bp.route('/users/<int:user_id>')
 @login_required
 def user_detail(user_id):
-    """Benutzer-Details"""
-    result = require_admin()
+    """Benutzer-Details (nur für Superadministratoren)"""
+    result = require_superadmin()
     if result:
         return result
     
@@ -86,8 +86,8 @@ def user_detail(user_id):
 @bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
 def delete_user(user_id):
-    """Benutzer löschen"""
-    result = require_admin()
+    """Benutzer löschen (nur für Superadministratoren)"""
+    result = require_superadmin()
     if result:
         return result
     
@@ -129,6 +129,186 @@ def trainers():
     
     trainers_list = TrainerProfile.query.order_by(TrainerProfile.last_name, TrainerProfile.first_name).all()
     return render_template('admin/trainers.html', trainers=trainers_list)
+
+@bp.route('/coaches')
+@login_required
+def coaches_list():
+    """Coach-Liste mit Filterung und Sortierung - zeigt nur Trainer mit Rolle 'coach'"""
+    result = require_admin()
+    if result:
+        return result
+    
+    # Filter- und Sortierparameter aus Query-String lesen
+    team_filter = request.args.get('team', '')
+    sort_by = request.args.get('sort', 'name')  # name, coaching_years, certificates
+    
+    # Basis-Query - zeigt nur Trainer-Profile von Benutzern mit is_coach=True
+    query = TrainerProfile.query.join(User).filter(User.is_coach == True)
+    
+    # Team-Filter anwenden (wenn ein Team ausgewählt wurde)
+    if team_filter:
+        # Finde Trainer, die Coaching-Erfahrungen mit diesem Team haben
+        query = query.join(CoachingExperience).filter(
+            CoachingExperience.team == team_filter
+        ).distinct()
+    
+    # Sortierung anwenden
+    if sort_by == 'name':
+        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
+    elif sort_by == 'coaching_years':
+        # Sortiere nach totalen Coaching-Jahren (absteigend)
+        # Für eine einfachere Implementierung verwenden wir eine Subquery
+        from sqlalchemy import func
+        # Wir müssen die Trainer nach ihren Coaching-Jahren sortieren
+        # Dies ist komplex, daher sortieren wir erstmal nach Name und lassen die Sortierung im Template machen
+        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
+    elif sort_by == 'certificates':
+        # Sortiere nach Anzahl Zertifikate (absteigend)
+        from sqlalchemy import func
+        query = query.outerjoin(Certificate).group_by(TrainerProfile.id).order_by(
+            func.count(Certificate.id).desc(),
+            TrainerProfile.last_name,
+            TrainerProfile.first_name
+        )
+    else:
+        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
+    
+    coaches = query.all()
+    
+    # Wenn nach Coaching-Jahren sortiert wird, sortieren wir im Python-Code
+    if sort_by == 'coaching_years':
+        coaches = sorted(coaches, key=lambda c: c.get_total_coaching_years(), reverse=True)
+    
+    # Verfügbare Teams für Filter
+    available_teams = CoachingExperience.TEAMS
+    
+    return render_template(
+        'admin/coaches_list.html',
+        coaches=coaches,
+        team_filter=team_filter,
+        sort_by=sort_by,
+        available_teams=available_teams
+    )
+
+@bp.route('/coaches/export')
+@login_required
+def coaches_export():
+    """Coach-Liste als Excel exportieren"""
+    result = require_admin()
+    if result:
+        return result
+    
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment, PatternFill
+        from openpyxl.utils import get_column_letter
+        from datetime import datetime
+    except ImportError:
+        flash('Excel-Export benötigt das Paket "openpyxl". Bitte installieren Sie es mit: pip install openpyxl', 'error')
+        return redirect(url_for('admin.coaches_list'))
+    
+    # Filter- und Sortierparameter aus Query-String lesen (wie in coaches_list)
+    team_filter = request.args.get('team', '')
+    sort_by = request.args.get('sort', 'name')
+    
+    # Basis-Query - zeigt nur Trainer-Profile von Benutzern mit is_coach=True
+    query = TrainerProfile.query.join(User).filter(User.is_coach == True)
+    
+    if team_filter:
+        query = query.join(CoachingExperience).filter(
+            CoachingExperience.team == team_filter
+        ).distinct()
+    
+    if sort_by == 'name':
+        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
+    elif sort_by == 'coaching_years':
+        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
+    elif sort_by == 'certificates':
+        from sqlalchemy import func
+        query = query.outerjoin(Certificate).group_by(TrainerProfile.id).order_by(
+            func.count(Certificate.id).desc(),
+            TrainerProfile.last_name,
+            TrainerProfile.first_name
+        )
+    else:
+        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
+    
+    coaches = query.all()
+    
+    if sort_by == 'coaching_years':
+        coaches = sorted(coaches, key=lambda c: c.get_total_coaching_years(), reverse=True)
+    
+    # Excel-Workbook erstellen
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Coach-Liste"
+    
+    # Header-Formatierung
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF")
+    
+    # Header-Zeile
+    headers = [
+        'Name', 'Vorname', 'Nachname', 'Lizenznummer', 'Aktuelle Funktion',
+        'E-Mail privat', 'E-Mail geschäftlich', 'Mobiltelefon privat', 'Mobiltelefon geschäftlich',
+        'Strasse', 'PLZ', 'Ort',
+        'Coaching-Jahre', 'Anzahl Zertifikate'
+    ]
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Daten einfügen
+    for row_num, coach in enumerate(coaches, 2):
+        # Teams sammeln (einzigartig)
+        unique_teams = set()
+        for exp in coach.coaching_experiences.all():
+            unique_teams.add(exp.team)
+        teams_str = ', '.join(sorted(unique_teams)) if unique_teams else ''
+        
+        ws.cell(row=row_num, column=1, value=f"{coach.first_name} {coach.last_name}")
+        ws.cell(row=row_num, column=2, value=coach.first_name)
+        ws.cell(row=row_num, column=3, value=coach.last_name)
+        ws.cell(row=row_num, column=4, value=coach.license_number or '')
+        ws.cell(row=row_num, column=5, value=coach.function_club or '')
+        ws.cell(row=row_num, column=6, value=coach.email_private or '')
+        ws.cell(row=row_num, column=7, value=coach.email_business or '')
+        ws.cell(row=row_num, column=8, value=coach.phone_private or '')
+        ws.cell(row=row_num, column=9, value=coach.phone_business or '')
+        ws.cell(row=row_num, column=10, value=coach.street or '')
+        ws.cell(row=row_num, column=11, value=coach.postal_code or '')
+        ws.cell(row=row_num, column=12, value=coach.city or '')
+        ws.cell(row=row_num, column=13, value=coach.get_total_coaching_years())
+        ws.cell(row=row_num, column=14, value=coach.certificates.count())
+    
+    # Spaltenbreite anpassen
+    for col_num in range(1, len(headers) + 1):
+        column_letter = get_column_letter(col_num)
+        ws.column_dimensions[column_letter].width = 20
+    
+    # Header-Zeile einfrieren
+    ws.freeze_panes = 'A2'
+    
+    # Dateiname generieren
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'coaches_export_{timestamp}.xlsx'
+    
+    # Excel-Datei in Memory speichern
+    from io import BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # Response erstellen
+    response = make_response(output.read())
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    return response
 
 @bp.route('/trainers/<int:trainer_id>')
 @login_required
@@ -178,6 +358,9 @@ def edit_trainer(trainer_id):
         db.session.commit()
         flash('Trainer-Profil wurde erfolgreich aktualisiert.', 'success')
         return redirect(url_for('admin.trainer_detail', trainer_id=trainer.id))
+    elif request.method == 'POST':
+        # Formular wurde abgesendet, aber nicht validiert - zeige Fehler
+        flash('Bitte korrigieren Sie die Fehler im Formular.', 'error')
     
     # Lade Coaching-Erfahrungen (absteigend sortiert, laufende zuerst)
     from sqlalchemy import case, desc
@@ -415,8 +598,8 @@ def delete_coaching_experience(exp_id):
 @bp.route('/users/<int:user_id>/change-password', methods=['GET', 'POST'])
 @login_required
 def change_user_password(user_id):
-    """Passwort eines Benutzers ändern"""
-    result = require_admin()
+    """Passwort eines Benutzers ändern (nur für Superadministratoren)"""
+    result = require_superadmin()
     if result:
         return result
     
@@ -437,6 +620,56 @@ def change_user_password(user_id):
         return redirect(url_for('admin.user_detail', user_id=user.id))
     
     return render_template('admin/change_password.html', form=form, user=user)
+
+@bp.route('/users/<int:user_id>/change-role', methods=['GET', 'POST'])
+@login_required
+def change_user_role(user_id):
+    """Rolle eines Benutzers ändern (nur für Superadministratoren)"""
+    result = require_superadmin()
+    if result:
+        return result
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Verhindere Selbständerung der Rolle
+    if user.id == current_user.id:
+        flash('Sie können Ihre eigene Rolle nicht ändern.', 'error')
+        return redirect(url_for('admin.user_detail', user_id=user.id))
+    
+    form = ChangeRoleForm()
+    
+    # Setze aktuelle Rolle als Standard
+    if request.method == 'GET':
+        if user.is_superadmin():
+            form.role.data = 'superadmin'
+        elif user.is_admin():
+            form.role.data = 'admin'
+        elif user.is_coach():
+            form.role.data = 'coach'
+    
+    if form.validate_on_submit():
+        old_role_name = user.get_role_name()
+        new_role_name = form.role.data
+        
+        # Setze alle Flags auf False
+        user.is_superadmin = False
+        user.is_admin = False
+        user.is_coach = False
+        
+        # Setze die gewählte Rolle
+        if new_role_name == 'superadmin':
+            user.is_superadmin = True
+        elif new_role_name == 'admin':
+            user.is_admin = True
+        elif new_role_name == 'coach':
+            user.is_coach = True
+        
+        db.session.commit()
+        
+        flash(f'Die Rolle von Benutzer {user.username} wurde von "{old_role_name}" zu "{new_role_name}" geändert.', 'success')
+        return redirect(url_for('admin.user_detail', user_id=user.id))
+    
+    return render_template('admin/change_role.html', form=form, user=user)
 
 @bp.route('/backup', methods=['GET', 'POST'])
 @login_required

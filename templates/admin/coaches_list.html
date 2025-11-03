@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Coach-Liste - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Coach-Liste</h1>
+            <div>
+                <a href="{{ url_for('admin.coaches_export', team=team_filter, sort=sort_by) }}" class="btn btn-success me-2">
+                    <i class="bi bi-file-earmark-excel"></i> Als Excel exportieren
+                </a>
+                <a href="{{ url_for('admin.trainers') }}" class="btn btn-secondary">Zurück zu Trainer verwalten</a>
+            </div>
+        </div>
+        
+        <!-- Filter- und Sortier-Formular -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Filter & Sortierung</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('admin.coaches_list') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="team" class="form-label">Nach Team filtern:</label>
+                        <select class="form-select" id="team" name="team">
+                            <option value="">Alle Teams</option>
+                            {% for team_value, team_label in available_teams %}
+                                <option value="{{ team_value }}" {% if team_filter == team_value %}selected{% endif %}>
+                                    {{ team_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sort" class="form-label">Sortieren nach:</label>
+                        <select class="form-select" id="sort" name="sort">
+                            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name</option>
+                            <option value="coaching_years" {% if sort_by == 'coaching_years' %}selected{% endif %}>Coaching-Jahre</option>
+                            <option value="certificates" {% if sort_by == 'certificates' %}selected{% endif %}>Anzahl Zertifikate</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">Filter anwenden</button>
+                        <a href="{{ url_for('admin.coaches_list') }}" class="btn btn-outline-secondary">Zurücksetzen</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Coach-Liste -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    Coach-Liste
+                    {% if team_filter %}
+                        <span class="badge bg-info ms-2">Team: {{ team_filter }}</span>
+                    {% endif %}
+                    <span class="badge bg-secondary ms-2">{{ coaches|length }} Coaches gefunden</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if coaches %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Lizenznummer</th>
+                                    <th>Aktuelle Funktion</th>
+                                    <th>E-Mail</th>
+                                    <th>Mobiltelefon</th>
+                                    <th>Coaching-Jahre</th>
+                                    <th>Zertifikate</th>
+                                    <th class="text-end">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for coach in coaches %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ coach.first_name }} {{ coach.last_name }}</strong>
+                                    </td>
+                                    <td>{{ coach.license_number or '-' }}</td>
+                                    <td>{{ coach.function_club or '-' }}</td>
+                                    <td>
+                                        <a href="mailto:{{ coach.get_email_private() or coach.user.email }}">
+                                            {{ coach.get_email_private() or coach.user.email }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if coach.phone_private %}
+                                            <a href="tel:{{ coach.phone_private }}">{{ coach.phone_private }}</a>
+                                        {% elif coach.phone_business %}
+                                            <a href="tel:{{ coach.phone_business }}">{{ coach.phone_business }}</a>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ coach.get_total_coaching_years() }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ coach.certificates.count() }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <a href="{{ url_for('admin.trainer_detail', trainer_id=coach.id) }}" class="btn btn-sm btn-primary" title="Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin.edit_trainer', trainer_id=coach.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        {% if team_filter %}
+                            <p class="mb-0">Keine Coaches gefunden, die für das Team "{{ team_filter }}" aktiv sind.</p>
+                        {% else %}
+                            <p class="mb-0">Noch keine Coaches vorhanden.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

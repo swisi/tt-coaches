@@ -24,9 +24,10 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
                                 <li><a class="dropdown-item" href="{{ url_for('admin.overview') }}">Übersicht</a></li>
                                 <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.coaches_list') }}">Coach-Liste</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('admin.trainers') }}">Trainer verwalten</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Benutzer verwalten</a></li>
                                 {% if current_user.is_superadmin() %}
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Benutzer verwalten</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{{ url_for('admin.backup') }}">Backup erstellen</a></li>
                                 {% endif %}
@@ -39,7 +40,7 @@
                             {{ current_user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><span class="dropdown-item-text text-muted">{{ current_user.role.name }}</span></li>
+                            <li><span class="dropdown-item-text text-muted">{{ current_user.get_role_name() }}</span></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Abmelden</a></li>
                         </ul>

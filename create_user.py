@@ -5,7 +5,7 @@ Beispiel-Verwendung:
 """
 import argparse
 from app import create_app, db
-from app.models import User, Role
+from app.models import User
 
 def create_user(username, email, password, role_name):
     """Erstellt einen neuen Benutzer"""
@@ -21,19 +21,14 @@ def create_user(username, email, password, role_name):
             print(f"Fehler: E-Mail '{email}' wird bereits verwendet.")
             return False
         
-        # Hole Rolle
-        role = Role.query.filter_by(name=role_name).first()
-        if not role:
-            print(f"Fehler: Rolle '{role_name}' existiert nicht.")
-            print("Verfügbare Rollen: superadmin, admin, coach")
-            return False
-        
-        # Erstelle Benutzer
+        # Erstelle Benutzer direkt mit Flags
         user = User(
             username=username,
             email=email,
-            role_id=role.id,
-            active=True
+            active=True,
+            is_superadmin=(role_name == 'superadmin'),
+            is_admin=(role_name == 'admin'),
+            is_coach=(role_name == 'coach')
         )
         user.set_password(password)
         

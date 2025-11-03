@@ -43,6 +43,14 @@ class ChangePasswordForm(FlaskForm):
         EqualTo('new_password', message='Passwörter müssen übereinstimmen')
     ])
 
+class ChangeRoleForm(FlaskForm):
+    """Rollen-Änderungsformular - Flag-basiert"""
+    role = SelectField('Rolle', choices=[
+        ('superadmin', 'Superadministrator'),
+        ('admin', 'Administrator'),
+        ('coach', 'Coach')
+    ], validators=[DataRequired()])
+
 class TrainerProfileForm(FlaskForm):
     """Trainer-Profil-Formular"""
     # Persönliche Daten
