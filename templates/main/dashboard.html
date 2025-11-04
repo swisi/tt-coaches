@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TT-Coaches{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Willkommen, {{ current_user.username }}!</h1>
+        <hr>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> <strong>Hinweis:</strong> Sie verfügen derzeit über keine zugewiesene Rolle.
+            Bitte wenden Sie sich an einen Administrator, um eine Rolle zugewiesen zu bekommen.
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Verfügbare Bereiche</h5>
+                <p class="card-text">
+                    Sobald Ihnen eine Rolle zugewiesen wurde, haben Sie Zugriff auf die entsprechenden Bereiche:
+                </p>
+                <ul>
+                    <li><strong>Superadministrator:</strong> Vollständige Administrationsrechte</li>
+                    <li><strong>Administrator:</strong> Kann Trainerdaten verwalten</li>
+                    <li><strong>Coach:</strong> Kann eigenes Profil verwalten</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

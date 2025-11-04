@@ -38,30 +38,134 @@ class User(UserMixin, db.Model):
     
     
     def get_role_name(self):
-        """Gibt den Rollennamen zurück (für Anzeige)"""
-        if self.is_superadmin:
-            return 'superadmin'
-        elif self.is_admin:
-            return 'admin'
-        elif self.is_coach:
-            return 'coach'
+        """Gibt den Rollennamen zurück (für Anzeige) - zeigt die höchste aktive Rolle"""
+        # Verwende direkte DB-Abfrage für korrekte Werte
+        from sqlalchemy import text
+        from app import db
+        if hasattr(self, 'id') and self.id:
+            try:
+                result = db.session.execute(
+                    text("SELECT is_superadmin, is_admin, is_coach FROM users WHERE id = :user_id"),
+                    {"user_id": self.id}
+                ).first()
+                if result:
+                    if result[0]:  # is_superadmin
+                        return 'superadmin'
+                    elif result[1]:  # is_admin
+                        return 'admin'
+                    elif result[2]:  # is_coach
+                        return 'coach'
+            except Exception:
+                pass
         return 'unbekannt'
+    
+    def get_active_roles(self):
+        """Gibt eine Liste aller aktiven Rollen zurück"""
+        roles = []
+        # Verwende direkte DB-Abfrage für korrekte Werte
+        from sqlalchemy import text
+        from app import db
+        if hasattr(self, 'id') and self.id:
+            try:
+                result = db.session.execute(
+                    text("SELECT is_superadmin, is_admin, is_coach FROM users WHERE id = :user_id"),
+                    {"user_id": self.id}
+                ).first()
+                if result:
+                    if result[0]:  # is_superadmin
+                        roles.append('Superadministrator')
+                    if result[1]:  # is_admin
+                        roles.append('Administrator')
+                    if result[2]:  # is_coach
+                        roles.append('Coach')
+            except Exception:
+                pass
+        return roles if roles else ['Keine Rolle']
     
     def is_superadmin(self):
         """Prüft ob Benutzer Superadministrator ist - direkt über Flag (stabil und schnell)"""
-        # Direkter Zugriff auf das Attribut über getattr um Rekursion zu vermeiden
-        return getattr(self, 'is_superadmin', False)
+        # SQLAlchemy speichert Spaltenwerte in verschiedenen Orten
+        # Versuche zuerst über getattr direkt (SQLAlchemy Descriptor)
+        try:
+            # Versuche direkten Zugriff über getattr (umgeht Methode)
+            value = getattr(type(self), 'is_superadmin').__get__(self, type(self))
+            # Wenn es ein Column-Descriptor ist, sollte es den Wert zurückgeben
+            # Aber wenn es None ist, prüfe direkt in der DB
+            if value is not None:
+                return bool(value)
+        except (AttributeError, TypeError):
+            pass
+        
+        # Fallback: Direkte Abfrage aus der Datenbank wenn Instanz-ID vorhanden
+        if hasattr(self, 'id') and self.id:
+            from sqlalchemy import text
+            from app import db
+            try:
+                result = db.session.execute(
+                    text("SELECT is_superadmin FROM users WHERE id = :user_id"),
+                    {"user_id": self.id}
+                ).scalar()
+                if result is not None:
+                    return bool(result)
+            except Exception:
+                pass
+        
+        return False
     
     def is_admin(self):
         """Prüft ob Benutzer Administrator ist - direkt über Flag (stabil und schnell)"""
-        return getattr(self, 'is_admin', False)
+        try:
+            value = getattr(type(self), 'is_admin').__get__(self, type(self))
+            if value is not None:
+                return bool(value)
+        except (AttributeError, TypeError):
+            pass
+        
+        if hasattr(self, 'id') and self.id:
+            from sqlalchemy import text
+            from app import db
+            try:
+                result = db.session.execute(
+                    text("SELECT is_admin FROM users WHERE id = :user_id"),
+                    {"user_id": self.id}
+                ).scalar()
+                if result is not None:
+                    return bool(result)
+            except Exception:
+                pass
+        
+        return False
     
     def is_coach(self):
         """Prüft ob Benutzer Coach ist - direkt über Flag (stabil und schnell)"""
-        return getattr(self, 'is_coach', False)
+        try:
+            value = getattr(type(self), 'is_coach').__get__(self, type(self))
+            if value is not None:
+                return bool(value)
+        except (AttributeError, TypeError):
+            pass
+        
+        if hasattr(self, 'id') and self.id:
+            from sqlalchemy import text
+            from app import db
+            try:
+                result = db.session.execute(
+                    text("SELECT is_coach FROM users WHERE id = :user_id"),
+                    {"user_id": self.id}
+                ).scalar()
+                if result is not None:
+                    return bool(result)
+            except Exception:
+                pass
+        
+        return False
     
     def can_manage_users(self):
-        """Prüft ob Benutzer andere Benutzer verwalten kann"""
+        """Prüft ob Benutzer andere Benutzer verwalten kann - nur Superadministratoren"""
+        return self.is_superadmin()
+    
+    def can_manage_trainers(self):
+        """Prüft ob Benutzer Trainer verwalten kann - Administratoren und Superadministratoren"""
         return self.is_superadmin() or self.is_admin()
     
     def __repr__(self):
@@ -91,6 +195,9 @@ class TrainerProfile(db.Model):
     # Curriculum Vitae
     cv_text = db.Column(db.Text)  # Strukturierter Text-CV
     cv_file_path = db.Column(db.String(500))  # Pfad zur hochgeladenen CV-Datei
+    
+    # Status
+    active = db.Column(db.Boolean, default=True, nullable=False)  # Trainer aktiv/inaktiv
     
     # Zeitstempel
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

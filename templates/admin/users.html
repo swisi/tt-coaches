@@ -25,7 +25,11 @@
                     <tr>
                         <td>{{ user.username }}</td>
                         <td>{{ user.email }}</td>
-                        <td><span class="badge bg-secondary">{{ user.get_role_name() }}</span></td>
+                        <td>
+                            {% for role in user.get_active_roles() %}
+                                <span class="badge bg-secondary me-1">{{ role }}</span>
+                            {% endfor %}
+                        </td>
                         <td>
                             {% if user.active %}
                                 <span class="badge bg-success">Aktiv</span>
@@ -36,15 +40,20 @@
                         <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
                         <td>
                             <div class="d-flex justify-content-end gap-1">
-                                <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Details">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                {% if current_user.is_superadmin() or (not user.is_superadmin() and user.id != current_user.id) %}
-                                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.');">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Löschen">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                {% if current_user.is_superadmin() %}
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if user.id != current_user.id %}
+                                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diesen Benutzer wirklich deaktivieren? Er kann sich nicht mehr anmelden und wird nicht mehr in Listen angezeigt.');">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Deaktivieren">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         </td>

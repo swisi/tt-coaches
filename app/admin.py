@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, TrainerProfile, Certificate, CoachingExperience
-from app.forms import TrainerProfileForm, CertificateForm, CoachingExperienceForm, ChangeRoleForm
+from app.forms import TrainerProfileForm, CertificateForm, CoachingExperienceForm, ChangeRoleForm, EditUserForm
 from app.utils import save_uploaded_file, delete_file
 from app.backup_utils import create_full_backup
 from config import Config
@@ -15,8 +15,8 @@ import os
 bp = Blueprint('admin', __name__)
 
 def require_admin():
-    """Prüft ob Benutzer Administrator oder Superadministrator ist"""
-    if not current_user.can_manage_users():
+    """Prüft ob Benutzer Trainer verwalten kann (Administrator oder Superadministrator)"""
+    if not current_user.can_manage_trainers():
         flash('Zugriff verweigert. Diese Seite ist nur für Administratoren verfügbar.', 'error')
         return redirect(url_for('main.dashboard'))
     return None
@@ -38,16 +38,17 @@ def overview():
     
     # Statistiken
     total_users = User.query.count()
-    total_trainers = TrainerProfile.query.count()
+    # Nur aktive Trainer zählen/anzeigen
+    total_trainers = TrainerProfile.query.filter(TrainerProfile.active == True).count()
     total_certificates = Certificate.query.count()
     
-    # Kürzlich hinzugefügte Trainer
-    recent_trainers = TrainerProfile.query.order_by(
+    # Kürzlich hinzugefügte aktive Trainer
+    recent_trainers = TrainerProfile.query.filter(TrainerProfile.active == True).order_by(
         TrainerProfile.created_at.desc()
     ).limit(10).all()
     
-    # Gesamtübersicht aller Trainer
-    all_trainers = TrainerProfile.query.order_by(
+    # Gesamtübersicht aller aktiven Trainer
+    all_trainers = TrainerProfile.query.filter(TrainerProfile.active == True).order_by(
         TrainerProfile.last_name,
         TrainerProfile.first_name
     ).all()
@@ -61,7 +62,8 @@ def overview():
         all_trainers=all_trainers
     )
 
-@bp.route('/users')
+@bp.route('/users', strict_slashes=False)
+@bp.route('/users/')
 @login_required
 def users():
     """Benutzer-Übersicht (nur für Superadministratoren)"""
@@ -72,51 +74,105 @@ def users():
     users_list = User.query.order_by(User.created_at.desc()).all()
     return render_template('admin/users.html', users=users_list)
 
-@bp.route('/users/<int:user_id>')
+@bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def user_detail(user_id):
-    """Benutzer-Details (nur für Superadministratoren)"""
+    """Benutzer-Details mit Rollenbearbeitung (nur für Superadministratoren)"""
     result = require_superadmin()
     if result:
         return result
     
+    # Lade User frisch aus der Datenbank
     user = User.query.get_or_404(user_id)
-    return render_template('admin/user_detail.html', user=user)
+    # Expire nur diesen User, um sicherzustellen, dass wir frische Daten bekommen
+    db.session.expire(user)
+    form = EditUserForm()
+    
+    # Verhindere Selbständerung der Rolle
+    can_edit_roles = user.id != current_user.id
+    
+    # Verarbeite Formular-Submit
+    if request.method == 'POST' and can_edit_roles:
+        if 'update_roles' in request.form:
+            old_role_name = user.get_role_name()
+            
+            # Checkboxen senden keinen Wert, wenn sie nicht angehakt sind
+            # Daher prüfen wir direkt request.form statt form.data
+            is_superadmin = 'is_superadmin' in request.form
+            is_admin = 'is_admin' in request.form
+            is_coach = 'is_coach' in request.form
+            
+            # Mindestens eine Rolle muss aktiviert sein
+            if not (is_superadmin or is_admin or is_coach):
+                flash('Mindestens eine Rolle muss aktiviert sein.', 'error')
+            else:
+                # Verwende direkte SQL-Abfrage um Namenskonflikte zu vermeiden und sicherzustellen, dass Änderungen gespeichert werden
+                from sqlalchemy import text
+                db.session.execute(
+                    text("""
+                        UPDATE users 
+                        SET is_superadmin = :is_superadmin, 
+                            is_admin = :is_admin, 
+                            is_coach = :is_coach 
+                        WHERE id = :user_id
+                    """),
+                    {
+                        'is_superadmin': int(is_superadmin),
+                        'is_admin': int(is_admin),
+                        'is_coach': int(is_coach),
+                        'user_id': user.id
+                    }
+                )
+                db.session.commit()
+                
+                flash(f'Die Rollen von Benutzer {user.username} wurden erfolgreich geändert.', 'success')
+                return redirect(url_for('admin.user_detail', user_id=user.id))
+    
+    # Lade User nochmal frisch aus der DB und setze Formular-Werte
+    # Verwende expire und refresh um sicherzustellen, dass wir frische Daten haben
+    db.session.expire(user)
+    db.session.refresh(user)
+    
+    # Lade die Rollenwerte direkt aus der Datenbank über eine neue Query
+    # Das umgeht alle Caching-Probleme und Namenskonflikte
+    from sqlalchemy import text
+    result = db.session.execute(
+        text("SELECT is_superadmin, is_admin, is_coach FROM users WHERE id = :user_id"),
+        {"user_id": user.id}
+    ).first()
+    
+    if result:
+        form.is_superadmin.data = bool(result[0]) if result[0] is not None else False
+        form.is_admin.data = bool(result[1]) if result[1] is not None else False
+        form.is_coach.data = bool(result[2]) if result[2] is not None else False
+    else:
+        # Fallback falls Query fehlschlägt
+        form.is_superadmin.data = False
+        form.is_admin.data = False
+        form.is_coach.data = False
+    
+    return render_template('admin/user_detail.html', user=user, form=form, can_edit_roles=can_edit_roles)
 
 @bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
 def delete_user(user_id):
-    """Benutzer löschen (nur für Superadministratoren)"""
+    """Benutzer deaktivieren (nur für Superadministratoren) - setzt active=False"""
     result = require_superadmin()
     if result:
         return result
     
     user = User.query.get_or_404(user_id)
     
-    # Superadmins können nur von anderen Superadmins gelöscht werden
-    if user.is_superadmin() and not current_user.is_superadmin():
-        flash('Superadministratoren können nur von anderen Superadministratoren gelöscht werden.', 'error')
-        return redirect(url_for('admin.users'))
-    
-    # Verhindere Selbstlöschung
+    # Verhindere Selbstdeaktivierung
     if user.id == current_user.id:
-        flash('Sie können sich nicht selbst löschen.', 'error')
+        flash('Sie können sich nicht selbst deaktivieren.', 'error')
         return redirect(url_for('admin.users'))
     
-    # Lösche zugehörige Dateien
-    if user.trainer_profile:
-        # CV-Datei
-        if user.trainer_profile.cv_file_path:
-            delete_file(user.trainer_profile.cv_file_path)
-        
-        # Zertifikat-Dateien
-        for cert in user.trainer_profile.certificates:
-            delete_file(cert.file_path)
-    
-    db.session.delete(user)
+    # Deaktiviere Benutzer (kann sich nicht mehr anmelden)
+    user.active = False
     db.session.commit()
     
-    flash(f'Benutzer {user.username} wurde erfolgreich gelöscht.', 'success')
+    flash(f'Benutzer {user.username} wurde erfolgreich deaktiviert.', 'success')
     return redirect(url_for('admin.users'))
 
 @bp.route('/trainers')
@@ -127,7 +183,17 @@ def trainers():
     if result:
         return result
     
-    trainers_list = TrainerProfile.query.order_by(TrainerProfile.last_name, TrainerProfile.first_name).all()
+    # Superadmin kann auch inaktive Trainer sehen, Admin nur aktive
+    if current_user.is_superadmin():
+        # Zeige alle Trainer (aktive und inaktive)
+        trainers_list = TrainerProfile.query.order_by(
+            TrainerProfile.last_name, TrainerProfile.first_name
+        ).all()
+    else:
+        # Nur aktive Trainer anzeigen
+        trainers_list = TrainerProfile.query.filter(TrainerProfile.active == True).order_by(
+            TrainerProfile.last_name, TrainerProfile.first_name
+        ).all()
     return render_template('admin/trainers.html', trainers=trainers_list)
 
 @bp.route('/coaches')
@@ -142,42 +208,38 @@ def coaches_list():
     team_filter = request.args.get('team', '')
     sort_by = request.args.get('sort', 'name')  # name, coaching_years, certificates
     
-    # Basis-Query - zeigt nur Trainer-Profile von Benutzern mit is_coach=True
-    query = TrainerProfile.query.join(User).filter(User.is_coach == True)
+    # Basis-Query - hole alle TrainerProfile von Benutzern mit is_coach=True
+    # Verwende direkte SQL-Abfrage um sicherzustellen, dass alle erfasst werden
+    from sqlalchemy import text
     
-    # Team-Filter anwenden (wenn ein Team ausgewählt wurde)
-    if team_filter:
-        # Finde Trainer, die Coaching-Erfahrungen mit diesem Team haben
-        query = query.join(CoachingExperience).filter(
-            CoachingExperience.team == team_filter
-        ).distinct()
+    # Hole alle user_ids mit is_coach=True direkt aus der DB
+    coach_user_ids = db.session.execute(
+        text("SELECT id FROM users WHERE is_coach = 1")
+    ).fetchall()
+    coach_user_ids = [row[0] for row in coach_user_ids]
     
-    # Sortierung anwenden
-    if sort_by == 'name':
-        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
-    elif sort_by == 'coaching_years':
-        # Sortiere nach totalen Coaching-Jahren (absteigend)
-        # Für eine einfachere Implementierung verwenden wir eine Subquery
-        from sqlalchemy import func
-        # Wir müssen die Trainer nach ihren Coaching-Jahren sortieren
-        # Dies ist komplex, daher sortieren wir erstmal nach Name und lassen die Sortierung im Template machen
-        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
-    elif sort_by == 'certificates':
-        # Sortiere nach Anzahl Zertifikate (absteigend)
-        from sqlalchemy import func
-        query = query.outerjoin(Certificate).group_by(TrainerProfile.id).order_by(
-            func.count(Certificate.id).desc(),
-            TrainerProfile.last_name,
-            TrainerProfile.first_name
-        )
+    if not coach_user_ids:
+        coaches = []
     else:
-        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
-    
-    coaches = query.all()
-    
-    # Wenn nach Coaching-Jahren sortiert wird, sortieren wir im Python-Code
-    if sort_by == 'coaching_years':
-        coaches = sorted(coaches, key=lambda c: c.get_total_coaching_years(), reverse=True)
+        # Lade alle TrainerProfile für diese Benutzer, aber nur wenn sie aktiv sind
+        coaches = TrainerProfile.query.filter(
+            TrainerProfile.user_id.in_(coach_user_ids),
+            TrainerProfile.active == True
+        ).all()
+        
+        # Team-Filter anwenden (wenn ein Team ausgewählt wurde)
+        if team_filter:
+            coaches = [c for c in coaches if any(
+                exp.team == team_filter for exp in c.coaching_experiences
+            )]
+        
+        # Sortierung anwenden
+        if sort_by == 'name':
+            coaches.sort(key=lambda c: (c.last_name or '', c.first_name or ''))
+        elif sort_by == 'coaching_years':
+            coaches.sort(key=lambda c: c.get_total_coaching_years(), reverse=True)
+        elif sort_by == 'certificates':
+            coaches.sort(key=lambda c: c.certificates.count(), reverse=True)
     
     # Verfügbare Teams für Filter
     available_teams = CoachingExperience.TEAMS
@@ -211,32 +273,38 @@ def coaches_export():
     team_filter = request.args.get('team', '')
     sort_by = request.args.get('sort', 'name')
     
-    # Basis-Query - zeigt nur Trainer-Profile von Benutzern mit is_coach=True
-    query = TrainerProfile.query.join(User).filter(User.is_coach == True)
+    # Basis-Query - hole alle TrainerProfile von Benutzern mit is_coach=True
+    # Verwende direkte SQL-Abfrage um sicherzustellen, dass alle erfasst werden
+    from sqlalchemy import text
     
-    if team_filter:
-        query = query.join(CoachingExperience).filter(
-            CoachingExperience.team == team_filter
-        ).distinct()
+    # Hole alle user_ids mit is_coach=True direkt aus der DB
+    coach_user_ids = db.session.execute(
+        text("SELECT id FROM users WHERE is_coach = 1")
+    ).fetchall()
+    coach_user_ids = [row[0] for row in coach_user_ids]
     
-    if sort_by == 'name':
-        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
-    elif sort_by == 'coaching_years':
-        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
-    elif sort_by == 'certificates':
-        from sqlalchemy import func
-        query = query.outerjoin(Certificate).group_by(TrainerProfile.id).order_by(
-            func.count(Certificate.id).desc(),
-            TrainerProfile.last_name,
-            TrainerProfile.first_name
-        )
+    if not coach_user_ids:
+        coaches = []
     else:
-        query = query.order_by(TrainerProfile.last_name, TrainerProfile.first_name)
-    
-    coaches = query.all()
-    
-    if sort_by == 'coaching_years':
-        coaches = sorted(coaches, key=lambda c: c.get_total_coaching_years(), reverse=True)
+        # Lade alle TrainerProfile für diese Benutzer, aber nur wenn sie aktiv sind
+        coaches = TrainerProfile.query.filter(
+            TrainerProfile.user_id.in_(coach_user_ids),
+            TrainerProfile.active == True
+        ).all()
+        
+        # Team-Filter anwenden (wenn ein Team ausgewählt wurde)
+        if team_filter:
+            coaches = [c for c in coaches if any(
+                exp.team == team_filter for exp in c.coaching_experiences
+            )]
+        
+        # Sortierung anwenden
+        if sort_by == 'name':
+            coaches.sort(key=lambda c: (c.last_name or '', c.first_name or ''))
+        elif sort_by == 'coaching_years':
+            coaches.sort(key=lambda c: c.get_total_coaching_years(), reverse=True)
+        elif sort_by == 'certificates':
+            coaches.sort(key=lambda c: c.certificates.count(), reverse=True)
     
     # Excel-Workbook erstellen
     wb = Workbook()
@@ -320,6 +388,20 @@ def trainer_detail(trainer_id):
     
     trainer = TrainerProfile.query.get_or_404(trainer_id)
     
+    # Lade active-Status direkt aus der DB um sicherzustellen, dass wir den korrekten Wert haben
+    from sqlalchemy import text
+    active_value = db.session.execute(
+        text("SELECT active FROM trainer_profiles WHERE id = :trainer_id"),
+        {"trainer_id": trainer_id}
+    ).scalar()
+    
+    # Setze active-Status explizit (umgeht SQLAlchemy-Caching)
+    trainer.active = bool(active_value) if active_value is not None else True
+    
+    # Refresh Trainer-Objekt um sicherzustellen, dass wir aktuelle Daten haben
+    db.session.expire(trainer)
+    db.session.refresh(trainer)
+    
     # Lade Zertifikate (absteigend sortiert)
     from sqlalchemy import desc
     certificates = trainer.certificates.order_by(
@@ -377,6 +459,66 @@ def edit_trainer(trainer_id):
     ).all()
     
     return render_template('admin/edit_trainer.html', form=form, trainer=trainer, coaching_experiences=coaching_experiences, certificates=certificates)
+
+@bp.route('/trainers/<int:trainer_id>/delete', methods=['POST'])
+@login_required
+def delete_trainer(trainer_id):
+    """Trainer deaktivieren (nur für Superadministratoren) - setzt active=False"""
+    result = require_superadmin()
+    if result:
+        return result
+    
+    trainer = TrainerProfile.query.get_or_404(trainer_id)
+    user = trainer.user
+    
+    # Verhindere Selbstdeaktivierung
+    if user.id == current_user.id:
+        flash('Sie können sich nicht selbst deaktivieren.', 'error')
+        return redirect(url_for('admin.trainers'))
+    
+    # Deaktiviere Trainer (wird dadurch nicht mehr in Listen angezeigt)
+    trainer.active = False
+    db.session.commit()
+    
+    flash(f'Trainer {trainer.first_name} {trainer.last_name} wurde erfolgreich deaktiviert.', 'success')
+    return redirect(url_for('admin.trainers'))
+
+@bp.route('/trainers/<int:trainer_id>/toggle-status', methods=['POST'])
+@login_required
+def toggle_trainer_status(trainer_id):
+    """Trainer aktivieren/deaktivieren (nur für Superadministratoren)"""
+    result = require_superadmin()
+    if result:
+        return result
+    
+    trainer = TrainerProfile.query.get_or_404(trainer_id)
+    user = trainer.user
+    
+    # Verhindere Selbständerung des Status
+    if user.id == current_user.id:
+        flash('Sie können Ihren eigenen Status nicht ändern.', 'error')
+        return redirect(url_for('admin.trainer_detail', trainer_id=trainer.id))
+    
+    # Lade aktuellen Status direkt aus DB
+    from sqlalchemy import text
+    current_active = db.session.execute(
+        text("SELECT active FROM trainer_profiles WHERE id = :trainer_id"),
+        {"trainer_id": trainer_id}
+    ).scalar()
+    
+    # Toggle Status
+    new_status = 1 if not bool(current_active) else 0
+    
+    # Update direkt in DB für Zuverlässigkeit
+    db.session.execute(
+        text("UPDATE trainer_profiles SET active = :active WHERE id = :trainer_id"),
+        {"active": new_status, "trainer_id": trainer_id}
+    )
+    db.session.commit()
+    
+    status_text = 'aktiviert' if new_status == 1 else 'deaktiviert'
+    flash(f'Trainer {trainer.first_name} {trainer.last_name} wurde erfolgreich {status_text}.', 'success')
+    return redirect(url_for('admin.trainer_detail', trainer_id=trainer.id))
 
 @bp.route('/trainers/<int:trainer_id>/upload-image', methods=['POST'])
 @login_required
@@ -510,8 +652,8 @@ def edit_certificate(cert_id):
 @bp.route('/certificates/<int:cert_id>/delete', methods=['POST'])
 @login_required
 def delete_certificate(cert_id):
-    """Zertifikat löschen (Admin)"""
-    result = require_admin()
+    """Zertifikat löschen (nur für Superadministratoren)"""
+    result = require_superadmin()
     if result:
         return result
     
@@ -581,8 +723,8 @@ def edit_coaching_experience(exp_id):
 @bp.route('/cv/<int:exp_id>/delete', methods=['POST'])
 @login_required
 def delete_coaching_experience(exp_id):
-    """Coaching-Erfahrung löschen (Admin)"""
-    result = require_admin()
+    """Coaching-Erfahrung löschen (nur für Superadministratoren)"""
+    result = require_superadmin()
     if result:
         return result
     
@@ -651,18 +793,20 @@ def change_user_role(user_id):
         old_role_name = user.get_role_name()
         new_role_name = form.role.data
         
-        # Setze alle Flags auf False
-        user.is_superadmin = False
-        user.is_admin = False
-        user.is_coach = False
+        # Setze alle Flags auf False zuerst - direkte Zuweisung für SQLAlchemy
+        User.query.filter_by(id=user.id).update({
+            'is_superadmin': False,
+            'is_admin': False,
+            'is_coach': False
+        })
         
-        # Setze die gewählte Rolle
+        # Setze die gewählte Rolle direkt in der Datenbank
         if new_role_name == 'superadmin':
-            user.is_superadmin = True
+            User.query.filter_by(id=user.id).update({'is_superadmin': True})
         elif new_role_name == 'admin':
-            user.is_admin = True
+            User.query.filter_by(id=user.id).update({'is_admin': True})
         elif new_role_name == 'coach':
-            user.is_coach = True
+            User.query.filter_by(id=user.id).update({'is_coach': True})
         
         db.session.commit()
         
@@ -670,6 +814,29 @@ def change_user_role(user_id):
         return redirect(url_for('admin.user_detail', user_id=user.id))
     
     return render_template('admin/change_role.html', form=form, user=user)
+
+@bp.route('/users/<int:user_id>/toggle-status', methods=['POST'])
+@login_required
+def toggle_user_status(user_id):
+    """Benutzer aktivieren/deaktivieren (nur für Superadministratoren)"""
+    result = require_superadmin()
+    if result:
+        return result
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Verhindere Selbständerung des Status
+    if user.id == current_user.id:
+        flash('Sie können Ihren eigenen Status nicht ändern.', 'error')
+        return redirect(url_for('admin.user_detail', user_id=user.id))
+    
+    # Toggle Status
+    user.active = not user.active
+    db.session.commit()
+    
+    status_text = 'aktiviert' if user.active else 'deaktiviert'
+    flash(f'Benutzer {user.username} wurde erfolgreich {status_text}.', 'success')
+    return redirect(url_for('admin.user_detail', user_id=user.id))
 
 @bp.route('/backup', methods=['GET', 'POST'])
 @login_required

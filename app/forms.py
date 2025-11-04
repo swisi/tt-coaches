@@ -51,6 +51,12 @@ class ChangeRoleForm(FlaskForm):
         ('coach', 'Coach')
     ], validators=[DataRequired()])
 
+class EditUserForm(FlaskForm):
+    """Formular zum Bearbeiten von Benutzerrollen"""
+    is_superadmin = BooleanField('Superadministrator')
+    is_admin = BooleanField('Administrator')
+    is_coach = BooleanField('Coach')
+
 class TrainerProfileForm(FlaskForm):
     """Trainer-Profil-Formular"""
     # Persönliche Daten

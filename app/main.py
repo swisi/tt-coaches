@@ -1,10 +1,11 @@
 """
 Haupt-Blueprint (Dashboard, Startseite)
 """
-from flask import Blueprint, render_template, redirect, url_for, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, send_from_directory, current_app
 from flask_login import login_required, current_user
 from config import Config
 from pathlib import Path
+import os
 
 bp = Blueprint('main', __name__)
 
@@ -28,5 +29,7 @@ def dashboard():
 @bp.route('/favicon.ico')
 def favicon():
     """Favicon-Route als Fallback"""
-    return send_from_directory(str(Path(Config.__file__).parent / 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    # Verwende den statischen Ordner der App oder das Basis-Verzeichnis
+    static_dir = current_app.static_folder if current_app else os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+    return send_from_directory(static_dir, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
