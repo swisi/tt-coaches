@@ -27,7 +27,7 @@ def login():
                     next_page = url_for('main.dashboard')
                 return redirect(next_page)
             else:
-                flash('Ihr Konto wurde deaktiviert.', 'error')
+                flash('Ihr Konto ist deaktiviert.', 'error')
         else:
             flash('Ungültiger Benutzername oder Passwort.', 'error')
     

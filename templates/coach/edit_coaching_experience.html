@@ -13,20 +13,24 @@
             
             <div class="card">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.start_year.label(class="form-label") }}
-                            {{ form.start_year(class="form-control", type="number", min="1900", max="2100") }}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.start_year.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.start_year(class="form-control form-control-sm", type="number", min="1900", max="2100") }}
                             {% if form.start_year.errors %}
                                 <div class="text-danger small">
                                     {% for error in form.start_year.errors %}<div>{{ error }}</div>{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.end_year.label(class="form-label") }}
-                            {{ form.end_year(class="form-control", type="number", min="1900", max="2100") }}
-                            <small class="form-text text-muted">Leer lassen für laufende Erfahrungen</small>
+                        <div class="col-md-2">
+                            {{ form.end_year.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.end_year(class="form-control form-control-sm", type="number", min="1900", max="2100") }}
+                            <small class="form-text text-muted">Leer = laufend</small>
                             {% if form.end_year.errors %}
                                 <div class="text-danger small">
                                     {% for error in form.end_year.errors %}<div>{{ error }}</div>{% endfor %}
@@ -35,38 +39,47 @@
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        {{ form.coaching_role.label(class="form-label") }}
-                        {{ form.coaching_role(class="form-select") }}
-                        {% if form.coaching_role.errors %}
-                            <div class="text-danger small">
-                                {% for error in form.coaching_role.errors %}<div>{{ error }}</div>{% endfor %}
-                            </div>
-                        {% endif %}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.coaching_role.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-9">
+                            {{ form.coaching_role(class="form-select form-select-sm") }}
+                            {% if form.coaching_role.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.coaching_role.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        {{ form.position.label(class="form-label") }}
-                        {{ form.position(class="form-select") }}
-                        <small class="form-text text-muted">Optional - kann leer bleiben</small>
-                        {% if form.position.errors %}
-                            <div class="text-danger small">
-                                {% for error in form.position.errors %}<div>{{ error }}</div>{% endfor %}
-                            </div>
-                        {% endif %}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.position.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.position(class="form-select form-select-sm") }}
+                            <small class="form-text text-muted">Optional</small>
+                            {% if form.position.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.position.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.team.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.team(class="form-select form-select-sm") }}
+                            {% if form.team.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.team.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        {{ form.team.label(class="form-label") }}
-                        {{ form.team(class="form-select") }}
-                        {% if form.team.errors %}
-                            <div class="text-danger small">
-                                {% for error in form.team.errors %}<div>{{ error }}</div>{% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mt-4">
+                    <div class="mt-3">
                         <button type="submit" class="btn btn-primary">Änderungen speichern</button>
                         <a href="{{ url_for('coach.profile') }}" class="btn btn-secondary">Abbrechen</a>
                     </div>

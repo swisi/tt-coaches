@@ -123,22 +123,17 @@
                         <i class="bi bi-key"></i> Passwort ändern
                     </a>
                 {% endif %}
-                <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" style="display: inline;">
-                    {% if user.active %}
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('Möchten Sie diesen Benutzer wirklich deaktivieren?');">
-                            <i class="bi bi-x-circle"></i> Benutzer deaktivieren
-                        </button>
-                    {% else %}
-                        <button type="submit" class="btn btn-success" onclick="return confirm('Möchten Sie diesen Benutzer wirklich aktivieren?');">
-                            <i class="bi bi-check-circle"></i> Benutzer aktivieren
-                        </button>
-                    {% endif %}
-                </form>
                 {% if user.id != current_user.id %}
-                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diesen Benutzer wirklich deaktivieren? Er kann sich nicht mehr anmelden und wird nicht mehr in Listen angezeigt.');">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-trash"></i> Benutzer deaktivieren
-                        </button>
+                    <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" style="display: inline;">
+                        {% if user.active %}
+                            <button type="submit" class="btn btn-warning" onclick="return confirm('Möchten Sie diesen Benutzer wirklich deaktivieren?');">
+                                <i class="bi bi-x-circle"></i> Benutzer deaktivieren
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Möchten Sie diesen Benutzer wirklich aktivieren?');">
+                                <i class="bi bi-check-circle"></i> Benutzer aktivieren
+                            </button>
+                        {% endif %}
                     </form>
                 {% endif %}
             {% endif %}

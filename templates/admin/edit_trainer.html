@@ -24,13 +24,13 @@
                 </div>
             {% endif %}
             
-            <div class="card mb-4">
+            <div class="card mb-1">
                 <div class="card-header">
                     <h5 class="mb-0">Persönliche Daten</h5>
                 </div>
                 <div class="card-body">
                     <!-- Profilbild und Name nebeneinander -->
-                    <div class="row mb-4">
+                    <div class="row mb-1">
                         <div class="col-md-3 text-center">
                             {% if trainer.profile_image_path %}
                                 <img src="{{ url_for('admin.serve_file', filename=trainer.profile_image_path) }}" 
@@ -49,19 +49,25 @@
                             </button>
                         </div>
                         <div class="col-md-9">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    {{ form.first_name.label(class="form-label") }}
-                                    {{ form.first_name(class="form-control") }}
+                            <div class="row mb-1">
+                                <div class="col-md-3">
+                                    {{ form.first_name.label(class="form-label fs-7 mb-0") }}
+                                </div>
+                                <div class="col-md-9">
+                                    {{ form.first_name(class="form-control form-control-sm") }}
                                     {% if form.first_name.errors %}
                                         <div class="text-danger small">
                                             {% for error in form.first_name.errors %}<div>{{ error }}</div>{% endfor %}
                                         </div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    {{ form.last_name.label(class="form-label") }}
-                                    {{ form.last_name(class="form-control") }}
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-md-3">
+                                    {{ form.last_name.label(class="form-label fs-7 mb-0") }}
+                                </div>
+                                <div class="col-md-9">
+                                    {{ form.last_name(class="form-control form-control-sm") }}
                                     {% if form.last_name.errors %}
                                         <div class="text-danger small">
                                             {% for error in form.last_name.errors %}<div>{{ error }}</div>{% endfor %}
@@ -69,69 +75,93 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                {{ form.license_number.label(class="form-label") }}
-                                {{ form.license_number(class="form-control") }}
+                            <div class="row mb-1">
+                                <div class="col-md-3">
+                                    {{ form.license_number.label(class="form-label fs-7 mb-0") }}
+                                </div>
+                                <div class="col-md-9">
+                                    {{ form.license_number(class="form-control form-control-sm") }}
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                {{ form.function_club.label(class="form-label") }}
-                                {{ form.function_club(class="form-control") }}
-                                {% if form.function_club.errors %}
-                                    <div class="text-danger small">
-                                        {% for error in form.function_club.errors %}<div>{{ error }}</div>{% endfor %}
-                                    </div>
-                                {% endif %}
+                            <div class="row mb-1">
+                                <div class="col-md-3">
+                                    {{ form.function_club.label(class="form-label fs-7 mb-0") }}
+                                </div>
+                                <div class="col-md-9">
+                                    {{ form.function_club(class="form-control form-control-sm") }}
+                                    {% if form.function_club.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.function_club.errors %}<div>{{ error }}</div>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        {{ form.street.label(class="form-label") }}
-                        {{ form.street(class="form-control") }}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.street.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-9">
+                            {{ form.street(class="form-control form-control-sm") }}
+                        </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            {{ form.postal_code.label(class="form-label") }}
-                            {{ form.postal_code(class="form-control") }}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.postal_code.label(class="form-label fs-7 mb-0") }}
                         </div>
-                        <div class="col-md-8 mb-3">
-                            {{ form.city.label(class="form-label") }}
-                            {{ form.city(class="form-control") }}
+                        <div class="col-md-3">
+                            {{ form.postal_code(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.city.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.city(class="form-control form-control-sm") }}
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="card mb-4">
+            <div class="card mb-1">
                 <div class="card-header">
                     <h5 class="mb-0">Kontaktinformationen</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.phone_private.label(class="form-label") }}
-                            {{ form.phone_private(class="form-control") }}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.phone_private.label(class="form-label fs-7 mb-0") }}
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.phone_business.label(class="form-label") }}
-                            {{ form.phone_business(class="form-control") }}
+                        <div class="col-md-4">
+                            {{ form.phone_private(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.phone_business.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.phone_business(class="form-control form-control-sm") }}
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.email_private.label(class="form-label") }}
-                            {{ form.email_private(class="form-control", type="email") }}
+                    <div class="row mb-1">
+                        <div class="col-md-3">
+                            {{ form.email_private.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.email_private(class="form-control form-control-sm", type="email") }}
                             {% if form.email_private.errors %}
                                 <div class="text-danger small">
                                     {% for error in form.email_private.errors %}<div>{{ error }}</div>{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.email_business.label(class="form-label") }}
-                            {{ form.email_business(class="form-control", type="email") }}
+                        <div class="col-md-2">
+                            {{ form.email_business.label(class="form-label fs-7 mb-0") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.email_business(class="form-control form-control-sm", type="email") }}
                             {% if form.email_business.errors %}
                                 <div class="text-danger small">
                                     {% for error in form.email_business.errors %}<div>{{ error }}</div>{% endfor %}
@@ -142,7 +172,7 @@
                 </div>
             </div>
             
-            <div class="card mb-4">
+            <div class="card mb-1">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Coaching-Erfahrungen (CV)</h5>
                     <a href="{{ url_for('admin.add_coaching_experience', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary">Neue Erfahrung hinzufügen</a>
@@ -169,7 +199,7 @@
                                         <td>{{ exp.team }}</td>
                                         <td>
                                             <div class="d-flex justify-content-end gap-1">
-                                                <a href="{{ url_for('admin.edit_coaching_experience', exp_id=exp.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                                <a href="{{ url_for('admin.edit_coaching_experience', exp_id=exp.id) }}" class="btn btn-sm btn-primary" title="Bearbeiten">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                                 <form method="POST" action="{{ url_for('admin.delete_coaching_experience', exp_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie diese Coaching-Erfahrung wirklich löschen?');">
@@ -192,7 +222,7 @@
                 </div>
             </div>
             
-            <div class="card mb-4">
+            <div class="card mb-1">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Zertifikate</h5>
                     <a href="{{ url_for('admin.add_certificate', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary">Neues Zertifikat hinzufügen</a>
@@ -226,10 +256,16 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <a href="{{ url_for('admin.edit_certificate', cert_id=cert.id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
-                                            <form method="POST" action="{{ url_for('admin.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
-                                                <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                                            </form>
+                                            <div class="d-flex justify-content-end gap-1">
+                                                <a href="{{ url_for('admin.edit_certificate', cert_id=cert.id) }}" class="btn btn-sm btn-primary" title="Bearbeiten">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('admin.delete_certificate', cert_id=cert.id) }}" style="display: inline;" onsubmit="return confirm('Möchten Sie dieses Zertifikat wirklich löschen?');">
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Löschen">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                     {% if cert.description %}
@@ -252,6 +288,21 @@
             <div class="mb-3">
                 <button type="submit" class="btn btn-primary">Profil speichern</button>
                 <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-secondary">Abbrechen</a>
+                {% if current_user.is_superadmin() %}
+                    {% if trainer.user.id != current_user.id %}
+                        <form method="POST" action="{{ url_for('admin.toggle_trainer_status', trainer_id=trainer.id) }}" style="display: inline;">
+                            {% if trainer.active == True or trainer.active == 1 or trainer.active %}
+                                <button type="submit" class="btn btn-warning" onclick="return confirm('Möchten Sie diesen Trainer wirklich deaktivieren?');">
+                                    <i class="bi bi-x-circle"></i> Trainer deaktivieren
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Möchten Sie diesen Trainer wirklich aktivieren?');">
+                                    <i class="bi bi-check-circle"></i> Trainer aktivieren
+                                </button>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                {% endif %}
             </div>
         </form>
         

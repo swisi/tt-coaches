@@ -62,7 +62,7 @@
                                             <a href="{{ url_for('admin.trainer_detail', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary" title="Details">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <a href="{{ url_for('admin.edit_trainer', trainer_id=trainer.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                            <a href="{{ url_for('admin.edit_trainer', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary" title="Bearbeiten">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                         </div>
@@ -143,9 +143,9 @@
         </div>
         
         <div class="mt-3">
-            <a href="{{ url_for('admin.trainers') }}" class="btn btn-primary">Detaillierte Trainer-Übersicht</a>
+            <a href="{{ url_for('admin.trainers') }}" class="btn btn-primary">Detaillierte Trainer Übersicht</a>
             {% if current_user.is_superadmin() %}
-                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Benutzer verwalten</a>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Detailierte Benutzer Übersicht</a>
             {% endif %}
         </div>
     </div>

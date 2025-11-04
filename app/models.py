@@ -291,6 +291,14 @@ class Certificate(db.Model):
     """Zertifikat-Modell"""
     __tablename__ = 'certificates'
     
+    # Ausbildungsarten
+    TRAINING_TYPES = [
+        ('', 'leer'),
+        ('Zertifikat', 'Zertifikat'),
+        ('Convention', 'Convention'),
+        ('Other', 'Other')
+    ]
+    
     id = db.Column(db.Integer, primary_key=True)
     trainer_profile_id = db.Column(db.Integer, db.ForeignKey('trainer_profiles.id'), nullable=False)
     
@@ -300,9 +308,10 @@ class Certificate(db.Model):
     issue_date = db.Column(db.Date)
     expiry_date = db.Column(db.Date)  # Optional, falls ablaufend
     description = db.Column(db.Text)
+    training_type = db.Column(db.String(50))  # Ausbildungsart: Zertifikat, Convention, leer, Other
     
     # Datei-Upload
-    file_path = db.Column(db.String(500), nullable=False)  # Pfad zur hochgeladenen Datei
+    file_path = db.Column(db.String(500), nullable=True)  # Pfad zur hochgeladenen Datei (optional)
     file_type = db.Column(db.String(10))  # pdf, png, jpg, etc.
     
     # Zeitstempel

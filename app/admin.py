@@ -178,23 +178,30 @@ def delete_user(user_id):
 @bp.route('/trainers')
 @login_required
 def trainers():
-    """Trainer-Übersicht"""
+    """Trainer-Übersicht - zeigt standardmäßig nur aktive Trainer"""
     result = require_admin()
     if result:
         return result
     
-    # Superadmin kann auch inaktive Trainer sehen, Admin nur aktive
-    if current_user.is_superadmin():
-        # Zeige alle Trainer (aktive und inaktive)
-        trainers_list = TrainerProfile.query.order_by(
-            TrainerProfile.last_name, TrainerProfile.first_name
-        ).all()
-    else:
-        # Nur aktive Trainer anzeigen
-        trainers_list = TrainerProfile.query.filter(TrainerProfile.active == True).order_by(
-            TrainerProfile.last_name, TrainerProfile.first_name
-        ).all()
-    return render_template('admin/trainers.html', trainers=trainers_list)
+    # Zeige nur aktive Trainer (für alle)
+    trainers_list = TrainerProfile.query.filter(TrainerProfile.active == True).order_by(
+        TrainerProfile.last_name, TrainerProfile.first_name
+    ).all()
+    return render_template('admin/trainers.html', trainers=trainers_list, show_inactive=False)
+
+@bp.route('/trainers/inactive')
+@login_required
+def trainers_inactive():
+    """Trainer-Übersicht - zeigt nur inaktive Trainer"""
+    result = require_admin()
+    if result:
+        return result
+    
+    # Zeige nur inaktive Trainer
+    trainers_list = TrainerProfile.query.filter(TrainerProfile.active == False).order_by(
+        TrainerProfile.last_name, TrainerProfile.first_name
+    ).all()
+    return render_template('admin/trainers.html', trainers=trainers_list, show_inactive=True)
 
 @bp.route('/coaches')
 @login_required
@@ -588,6 +595,7 @@ def add_certificate(trainer_id):
                 issue_date=form.issue_date.data,
                 expiry_date=form.expiry_date.data,
                 description=form.description.data,
+                training_type=form.training_type.data if form.training_type.data else None,
                 file_path=file_path,
                 file_type=form.file.data.filename.rsplit('.', 1)[1].lower() if form.file.data and '.' in form.file.data.filename else None
             )
@@ -641,6 +649,7 @@ def edit_certificate(cert_id):
         certificate.issue_date = form.issue_date.data
         certificate.expiry_date = form.expiry_date.data
         certificate.description = form.description.data
+        certificate.training_type = form.training_type.data if form.training_type.data else None
         
         db.session.commit()
         flash('Zertifikat wurde erfolgreich aktualisiert.', 'success')

@@ -110,7 +110,7 @@
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             {% if current_user.can_manage_trainers() %}
-                                                <a href="{{ url_for('admin.edit_trainer', trainer_id=coach.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                                <a href="{{ url_for('admin.edit_trainer', trainer_id=coach.id) }}" class="btn btn-sm btn-primary" title="Bearbeiten">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                             {% endif %}

@@ -44,7 +44,7 @@
                                     <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Details">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Bearbeiten">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     {% if user.id != current_user.id %}

@@ -145,14 +145,16 @@ def add_certificate():
     form = CertificateForm()
     
     if form.validate_on_submit():
-        # Speichere hochgeladene Datei
-        file_path = save_uploaded_file(
-            form.file.data,
-            'CERTIFICATES',
-            prefix=f'cert_{current_user.id}'
-        )
+        # Speichere hochgeladene Datei (optional)
+        file_path = None
+        if form.file.data:
+            file_path = save_uploaded_file(
+                form.file.data,
+                'CERTIFICATES',
+                prefix=f'cert_{current_user.id}'
+            )
         
-        if file_path:
+        if file_path or not form.file.data:  # Erlaube Zertifikat ohne Datei
             certificate = Certificate(
                 trainer_profile_id=profile.id,
                 title=form.title.data,
@@ -160,8 +162,9 @@ def add_certificate():
                 issue_date=form.issue_date.data,
                 expiry_date=form.expiry_date.data,
                 description=form.description.data,
+                training_type=form.training_type.data if form.training_type.data else None,
                 file_path=file_path,
-                file_type=form.file.data.filename.rsplit('.', 1)[1].lower()
+                file_type=form.file.data.filename.rsplit('.', 1)[1].lower() if form.file.data and '.' in form.file.data.filename else None
             )
             db.session.add(certificate)
             db.session.commit()
@@ -218,6 +221,7 @@ def edit_certificate(cert_id):
         certificate.issue_date = form.issue_date.data
         certificate.expiry_date = form.expiry_date.data
         certificate.description = form.description.data
+        certificate.training_type = form.training_type.data if form.training_type.data else None
         
         db.session.commit()
         flash('Zertifikat wurde erfolgreich aktualisiert.', 'success')

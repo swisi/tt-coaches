@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <h1>Trainer-Übersicht</h1>
+        <h1>Trainer-Übersicht{% if show_inactive %} - Inaktiv{% endif %}</h1>
         <hr>
         
         <div class="table-responsive">
@@ -42,7 +42,7 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 {% if current_user.can_manage_trainers() %}
-                                    <a href="{{ url_for('admin.edit_trainer', trainer_id=trainer.id) }}" class="btn btn-sm btn-secondary" title="Bearbeiten">
+                                    <a href="{{ url_for('admin.edit_trainer', trainer_id=trainer.id) }}" class="btn btn-sm btn-primary" title="Bearbeiten">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 {% endif %}
@@ -62,7 +62,18 @@
         </div>
         
         <div class="mt-3">
-            <a href="{{ url_for('admin.overview') }}" class="btn btn-secondary">Zurück zur Übersicht</a>
+            <a href="{{ url_for('admin.overview') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Zurück zur Übersicht
+            </a>
+            {% if show_inactive %}
+                <a href="{{ url_for('admin.trainers') }}" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Aktive Trainer anzeigen
+                </a>
+            {% else %}
+                <a href="{{ url_for('admin.trainers_inactive') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Inaktive Trainer anzeigen
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>

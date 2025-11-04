@@ -5,7 +5,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, DateField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError, EqualTo, NumberRange
-from app.models import User, CoachingExperience
+from app.models import User, CoachingExperience, Certificate
 
 class LoginForm(FlaskForm):
     """Login-Formular"""
@@ -98,5 +98,6 @@ class CertificateForm(FlaskForm):
     issue_date = DateField('Ausstellungsdatum', validators=[Optional()])
     expiry_date = DateField('Ablaufdatum', validators=[Optional()])
     description = TextAreaField('Beschreibung', validators=[Optional()])
-    file = FileField('Zertifikat-Datei', validators=[DataRequired(), FileAllowed(['pdf', 'png', 'jpg', 'jpeg', 'gif'], 'Nur PDF und Bilddateien erlaubt')])
+    training_type = SelectField('Ausbildungsart', choices=Certificate.TRAINING_TYPES, validators=[Optional()])
+    file = FileField('Zertifikat-Datei', validators=[Optional(), FileAllowed(['pdf', 'png', 'jpg', 'jpeg', 'gif'], 'Nur PDF und Bilddateien erlaubt')])
 
