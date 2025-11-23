@@ -11,8 +11,10 @@ class Config:
     # Stelle sicher, dass das Verzeichnis existiert
     os.makedirs(db_path, exist_ok=True)
     # Wenn DATABASE_URL gesetzt ist, verwende es, sonst baue URI aus DATABASE_PATH
-    if os.environ.get('DATABASE_URL'):
-        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    # WICHTIG: SQLite benötigt 4 Slashes für absoluten Pfad: sqlite:////path/to/db.db
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        SQLALCHEMY_DATABASE_URI = db_url
     else:
         SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(db_path, "coaches.db")}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
