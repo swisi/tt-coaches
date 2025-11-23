@@ -1,9 +1,12 @@
 version: '3.8'
 
+# Lokale docker-compose für Entwicklung (baut Image lokal)
+# Verwendung: docker-compose -f docker-compose.local.yml up
+
 services:
   web:
-    image: ${DOCKER_HUB_USERNAME:-swisi}/coaches:${IMAGE_TAG:-latest}
-    container_name: coaches-app
+    build: .
+    container_name: coaches-app-local
     ports:
       - "3000:3000"
     environment:
@@ -12,7 +15,6 @@ services:
       - DATABASE_PATH=/app/data
       - DATABASE_URL=sqlite:///data/coaches.db
       - UPLOAD_BASE=/app
-    pull_policy: always
     volumes:
       # Datenbank-Persistenz
       - ./data:/app/data

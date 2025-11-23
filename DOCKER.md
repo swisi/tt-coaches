@@ -11,14 +11,25 @@ Anleitung zur Bereitstellung der CoachManager-Anwendung in Docker-Containern.
 
 ### Mit Docker Compose (empfohlen)
 
+Die `docker-compose.yml` verwendet standardmäßig das Image von Docker Hub.
+
 1. **Umgebungsvariablen setzen** (optional):
 ```bash
 export SECRET_KEY="dein-sicheres-secret-key"
+export DOCKER_HUB_USERNAME="dein-dockerhub-username"  # Standard: swisi
+export IMAGE_TAG="latest"  # Oder spezifische Version wie "1.0.0"
 ```
 
 2. **Container starten**:
 ```bash
 docker-compose up -d
+```
+
+Das Image wird automatisch von Docker Hub geladen.
+
+**Für lokale Entwicklung (Image lokal bauen):**
+```bash
+docker-compose -f docker-compose.local.yml up -d
 ```
 
 3. **Anwendung aufrufen**:
