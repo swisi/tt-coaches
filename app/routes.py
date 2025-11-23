@@ -659,6 +659,13 @@ def restore_data():
         try:
             clear_existing = request.form.get('clear_existing') == 'on'
             
+            # Speichere den aktuell eingeloggten Benutzer, falls clear_existing aktiviert ist
+            current_user_email = None
+            current_user_is_admin = False
+            if clear_existing and current_user.is_authenticated:
+                current_user_email = current_user.email
+                current_user_is_admin = current_user.is_admin
+            
             if is_zip:
                 # ZIP-Backup (mit Dateien)
                 success, message, stats = restore_backup_from_zip(file, clear_existing=clear_existing)
@@ -666,6 +673,38 @@ def restore_data():
                 # JSON-Backup (nur Daten, Rückwärtskompatibilität)
                 backup_json = file.read().decode('utf-8')
                 success, message, stats = import_backup(backup_json, clear_existing=clear_existing)
+            
+            # Nach dem Restore: Prüfe ob der eingeloggte Benutzer noch existiert
+            if success and clear_existing and current_user_email:
+                from flask_login import logout_user
+                restored_user = User.query.filter_by(email=current_user_email).first()
+                if restored_user:
+                    # Benutzer wurde wiederhergestellt, Session bleibt aktiv
+                    pass
+                else:
+                    # Benutzer wurde nicht wiederhergestellt, logge aus
+                    logout_user()
+                    flash('Restore abgeschlossen. Bitte melde dich erneut an.', 'info')
+                    return redirect(url_for('auth.login'))
+            
+            # Nach dem Restore: Prüfe ob der eingeloggte Benutzer noch existiert
+            if success and clear_existing:
+                # Lade den Benutzer neu aus der Datenbank
+                from flask_login import logout_user
+                db.session.expire_all()  # Erzwinge Neuladen aus DB
+                try:
+                    # Prüfe ob current_user noch in der DB existiert
+                    user = User.query.get(current_user.id)
+                    if not user:
+                        # Benutzer wurde gelöscht, logge aus
+                        logout_user()
+                        flash('Restore abgeschlossen. Bitte melde dich mit einem Benutzer aus dem Backup erneut an.', 'info')
+                        return redirect(url_for('auth.login'))
+                except Exception:
+                    # Fehler beim Zugriff auf current_user, logge aus
+                    logout_user()
+                    flash('Restore abgeschlossen. Bitte melde dich erneut an.', 'info')
+                    return redirect(url_for('auth.login'))
             
             if success:
                 flash(message, 'success')
