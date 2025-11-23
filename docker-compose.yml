@@ -12,6 +12,7 @@ services:
       - DATABASE_PATH=/app/data
       - DATABASE_URL=sqlite:////app/data/coaches.db
       - UPLOAD_BASE=/app
+      - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-524288000}  # 500MB default (für große Backup-Dateien)
     pull_policy: always
     volumes:
       # Datenbank-Persistenz

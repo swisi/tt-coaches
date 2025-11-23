@@ -21,6 +21,7 @@ services:
       - DATABASE_PATH=/app/data
       - DATABASE_URL=sqlite:////app/data/coaches.db
       - UPLOAD_BASE=/app
+      - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-524288000}  # 500MB default (für große Backup-Dateien)
     pull_policy: always
     volumes:
       # Datenbank-Persistenz
@@ -60,6 +61,7 @@ Du kannst folgende Umgebungsvariablen in Portainer setzen:
 | `DOCKER_HUB_USERNAME` | Docker Hub Username | `swisi` |
 | `IMAGE_TAG` | Image Version | `latest` |
 | `SECRET_KEY` | Flask Secret Key | `change-me-in-production` |
+| `MAX_CONTENT_LENGTH` | Maximale Upload-Größe in Bytes | `524288000` (500MB) |
 
 ### Volumes
 
@@ -89,6 +91,21 @@ Die Anwendung verwendet Docker Volumes für Datenpersistenz:
 ```yaml
 DATABASE_URL=sqlite:////app/data/coaches.db
 ```
+
+### Fehler: "Request Entity Too Large" oder "Datei zu groß"
+
+**Ursache:** Backup-Datei überschreitet das Upload-Limit.
+
+**Lösung:** 
+1. Erhöhe `MAX_CONTENT_LENGTH` in den Umgebungsvariablen (in Bytes):
+   ```yaml
+   MAX_CONTENT_LENGTH=1048576000  # 1GB
+   ```
+2. Falls du einen Reverse Proxy (Nginx) verwendest, erhöhe auch dort das Limit:
+   ```nginx
+   client_max_body_size 1G;
+   ```
+3. In Portainer: Prüfe, ob es Container-spezifische Limits gibt
 
 ### Fehler: "Permission denied"
 

@@ -22,8 +22,14 @@ class Config:
     # Upload settings (kann über Umgebungsvariable überschrieben werden)
     upload_base = os.environ.get('UPLOAD_BASE', basedir)
     UPLOAD_FOLDER = os.path.join(upload_base, 'app', 'static', 'uploads', 'certificates')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+    # Max Upload-Größe: Standard 500MB (für große Backup-Dateien)
+    # Kann über MAX_CONTENT_LENGTH Umgebungsvariable überschrieben werden (in Bytes)
+    max_content_length = os.environ.get('MAX_CONTENT_LENGTH')
+    if max_content_length:
+        MAX_CONTENT_LENGTH = int(max_content_length)
+    else:
+        MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB default (für Backup-Dateien)
+    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'zip', 'json'}  # Backup-Formate hinzugefügt
     
     # Session settings
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
