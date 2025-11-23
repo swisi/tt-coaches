@@ -1,7 +1,7 @@
 """
 Backup & Restore Funktionen für die CoachManager Anwendung
 """
-from datetime import datetime
+from datetime import datetime, date, time
 from app import db
 from app.models import User, Certificate, Experience, TrainingPlan, TrainingActivity
 from flask import current_app
@@ -216,6 +216,44 @@ def import_backup(backup_json, clear_existing=False):
     try:
         backup_data = json.loads(backup_json)
         
+        # Helper-Funktionen für Datum/Zeit-Konvertierung
+        def parse_date(date_str):
+            """Konvertiert einen String zu einem date-Objekt"""
+            if not date_str:
+                return None
+            try:
+                if isinstance(date_str, str):
+                    if len(date_str) == 10:  # YYYY-MM-DD Format
+                        return date.fromisoformat(date_str)
+                    else:
+                        # Falls datetime String, extrahiere nur das Datum
+                        return datetime.fromisoformat(date_str).date()
+                return date_str
+            except (ValueError, AttributeError):
+                try:
+                    return datetime.fromisoformat(date_str).date()
+                except:
+                    return None
+        
+        def parse_time(time_str):
+            """Konvertiert einen String zu einem time-Objekt"""
+            if not time_str:
+                return None
+            try:
+                if isinstance(time_str, str):
+                    # Versuche zuerst time.fromisoformat (für reine Zeitstrings wie HH:MM:SS)
+                    if 'T' not in time_str and len(time_str) <= 8:
+                        return time.fromisoformat(time_str)
+                    else:
+                        # Falls datetime String, extrahiere nur die Zeit
+                        return datetime.fromisoformat(time_str).time()
+                return time_str
+            except (ValueError, AttributeError):
+                try:
+                    return datetime.fromisoformat(time_str).time()
+                except:
+                    return None
+        
         stats = {
             'users': 0,
             'certificates': 0,
@@ -252,7 +290,7 @@ def import_backup(backup_json, clear_existing=False):
                     address=user_data.get('address'),
                     zip_code=user_data.get('zip_code'),
                     city=user_data.get('city'),
-                    birth_date=datetime.fromisoformat(user_data['birth_date']) if user_data.get('birth_date') else None,
+                    birth_date=parse_date(user_data.get('birth_date')),
                     team=user_data.get('team'),
                     is_admin=user_data.get('is_admin', False)
                 )
@@ -283,8 +321,8 @@ def import_backup(backup_json, clear_existing=False):
                     user_id=user_id,
                     title=cert_data['title'],
                     organization=cert_data['organization'],
-                    acquisition_date=datetime.fromisoformat(cert_data['acquisition_date']) if cert_data.get('acquisition_date') else None,
-                    valid_until=datetime.fromisoformat(cert_data['valid_until']) if cert_data.get('valid_until') else None,
+                    acquisition_date=parse_date(cert_data.get('acquisition_date')),
+                    valid_until=parse_date(cert_data.get('valid_until')),
                     file_url=cert_data.get('file_url')
                 )
                 db.session.add(cert)
@@ -321,10 +359,10 @@ def import_backup(backup_json, clear_existing=False):
                 plan = TrainingPlan(
                     title=plan_data['title'],
                     team_name=plan_data['team_name'],
-                    start_date=datetime.fromisoformat(plan_data['start_date']).date() if plan_data.get('start_date') else None,
-                    end_date=datetime.fromisoformat(plan_data['end_date']).date() if plan_data.get('end_date') else None,
+                    start_date=parse_date(plan_data.get('start_date')),
+                    end_date=parse_date(plan_data.get('end_date')),
                     weekday=plan_data['weekday'],
-                    start_time=datetime.fromisoformat(plan_data['start_time']).time() if plan_data.get('start_time') else None,
+                    start_time=parse_time(plan_data.get('start_time')),
                     dresscode=plan_data.get('dresscode'),
                     focus=plan_data.get('focus'),
                     goals=plan_data.get('goals'),
@@ -344,8 +382,8 @@ def import_backup(backup_json, clear_existing=False):
                 
                 activity = TrainingActivity(
                     plan_id=new_plan_id,
-                    time_from=datetime.fromisoformat(activity_data['time_from']).time() if activity_data.get('time_from') else None,
-                    time_to=datetime.fromisoformat(activity_data['time_to']).time() if activity_data.get('time_to') else None,
+                    time_from=parse_time(activity_data.get('time_from')),
+                    time_to=parse_time(activity_data.get('time_to')),
                     duration_minutes=activity_data['duration_minutes'],
                     activity_name=activity_data['activity_name'],
                     activity_type=activity_data['activity_type'],
