@@ -167,4 +167,3 @@ Diese Anwendung wurde speziell für den Einsatz in American Football Vereinen en
 **Version**: 1.0  
 **Letztes Update**: November 2025  
 **Status**: Produktionsbereit
-
