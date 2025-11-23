@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, abort, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from app import db
@@ -10,6 +10,7 @@ from app.backup_restore import export_backup, import_backup, create_backup_zip, 
 from datetime import datetime, date, time, timedelta
 import csv
 import io
+import os
 
 bp = Blueprint('routes', __name__)
 
@@ -683,4 +684,25 @@ def restore_data():
 def admin_backup_restore():
     """Backup & Restore Verwaltungsseite"""
     return render_template('admin/backup_restore.html')
+
+# Route zum Servieren von Upload-Dateien (falls Flask sie nicht automatisch findet)
+@bp.route('/static/uploads/certificates/<path:filename>')
+@login_required
+def serve_certificate_file(filename):
+    """Serviert Zertifikatsdateien explizit"""
+    try:
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, filename)
+        
+        # Sicherheitsprüfung: Stelle sicher, dass die Datei im Upload-Ordner ist
+        if not os.path.abspath(file_path).startswith(os.path.abspath(upload_folder)):
+            abort(403)
+        
+        if os.path.exists(file_path):
+            return send_file(file_path)
+        else:
+            abort(404)
+    except Exception as e:
+        current_app.logger.error(f"Fehler beim Servieren der Datei {filename}: {str(e)}")
+        abort(404)
 
