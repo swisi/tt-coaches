@@ -28,6 +28,7 @@ ACTIVITY_TYPES = [
     ('prepractice', 'Prepractice'),
     ('team_wide', 'Team-Wide'),
     ('group_specific', 'Group-Specific'),
+    ('position_specific', 'Position spezifisch'),
     ('special_teams', 'Special Teams')
 ]
 
@@ -41,7 +42,7 @@ WEEKDAYS = [
     (6, 'Sonntag')
 ]
 
-GROUPS = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB']
+GROUPS = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'DB', 'QB']
 
 class LoginForm(FlaskForm):
     email = StringField('E-Mail', validators=[DataRequired(), Email(check_deliverability=False)])

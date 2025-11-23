@@ -175,7 +175,7 @@ class TrainingActivity(db.Model):
         if self.activity_type != 'group_specific' or not self.group_activities:
             return []
         
-        GROUPS_ORDER = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB']
+        GROUPS_ORDER = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'DB', 'QB']
         
         # Konvertiere group_activities dict in Liste von Tupeln
         combinations = []
@@ -195,11 +195,66 @@ class TrainingActivity(db.Model):
         Gibt eine Liste von Zellen für die Gruppen-Spalten zurück.
         Jede Zelle ist ein Dict mit 'colspan', 'text', 'groups'
         """
-        GROUPS_ORDER = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB']
+        GROUPS_ORDER = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'DB', 'QB']
+        
+        # Special Teams kann Gruppenkombinationen haben (wie Group-Specific)
+        # Wenn keine group_activities vorhanden, dann wie Team-Wide behandeln
+        if self.activity_type == 'special_teams' and self.group_activities:
+            # Erstelle Mapping von Gruppe zu Aktivitätsname (wie bei group_specific)
+            group_to_activity = {}
+            for key, activity_name in self.group_activities.items():
+                groups = [g.strip() for g in key.split(',')]
+                for group in groups:
+                    if group in GROUPS_ORDER:
+                        group_to_activity[group] = activity_name
+            
+            # Erstelle Zellen mit merged cells
+            cells = []
+            i = 0
+            while i < len(GROUPS_ORDER):
+                group = GROUPS_ORDER[i]
+                if group in group_to_activity:
+                    # Finde alle aufeinanderfolgenden Gruppen mit demselben Text
+                    activity_text = group_to_activity[group]
+                    span_groups = [group]
+                    j = i + 1
+                    while j < len(GROUPS_ORDER) and GROUPS_ORDER[j] in group_to_activity and group_to_activity[GROUPS_ORDER[j]] == activity_text:
+                        span_groups.append(GROUPS_ORDER[j])
+                        j += 1
+                    
+                    cells.append({
+                        'colspan': len(span_groups),
+                        'text': activity_text,
+                        'groups': span_groups
+                    })
+                    i = j
+                else:
+                    # Keine Aktivität für diese Gruppe
+                    cells.append({
+                        'colspan': 1,
+                        'text': '-',
+                        'groups': [group]
+                    })
+                    i += 1
+            
+            return cells
         
         if self.activity_type == 'team_wide' or self.activity_type == 'prepractice' or self.activity_type == 'special_teams':
-            # Alle Gruppen zusammen
+            # Alle Gruppen zusammen (wenn keine group_activities bei special_teams)
             return [{'colspan': 8, 'text': self.activity_name, 'groups': GROUPS_ORDER}]
+        
+        if self.activity_type == 'position_specific' and self.group_activities:
+            # Position spezifisch: Jede Gruppe hat ihren eigenen Aktivitätsnamen
+            # Format: {"OL": "OL Aktivität", "DL": "DL Aktivität", ...}
+            cells = []
+            for group in GROUPS_ORDER:
+                activity_text = self.group_activities.get(group, '')
+                cells.append({
+                    'colspan': 1,
+                    'text': activity_text if activity_text else '-',
+                    'groups': [group]
+                })
+            return cells
         
         if self.activity_type == 'group_specific' and self.group_activities:
             # Erstelle Mapping von Gruppe zu Aktivitätsname
@@ -257,6 +312,7 @@ class TrainingActivity(db.Model):
             'prepractice': 'amber',
             'team_wide': 'purple',
             'group_specific': 'blue',
+            'position_specific': 'indigo',
             'special_teams': 'green'
         }
         return colors.get(self.activity_type, 'gray')

@@ -408,14 +408,23 @@ def new_activity(plan_id):
         # Nächste Order-Nummer finden
         max_order = db.session.query(func.max(TrainingActivity.order)).filter_by(plan_id=plan_id).scalar() or 0
         
-        # Sammle group_activities für group_specific
+        # Sammle group_activities für group_specific, special_teams und position_specific
         group_activities = {}
-        if form.activity_type.data == 'group_specific':
+        if form.activity_type.data == 'group_specific' or form.activity_type.data == 'special_teams':
             for key, value in request.form.items():
                 if key.startswith('group_activity_'):
                     combination_key = key.replace('group_activity_', '')
                     if value and value.strip():
-                        group_activities[combination_key] = value.strip()
+                        # Sortiere die Gruppen im Key, damit Keys konsistent sind
+                        groups = sorted([g.strip() for g in combination_key.split(',')])
+                        sorted_key = ','.join(groups)
+                        group_activities[sorted_key] = value.strip()
+        elif form.activity_type.data == 'position_specific':
+            for key, value in request.form.items():
+                if key.startswith('position_activity_'):
+                    group = key.replace('position_activity_', '')
+                    if value and value.strip():
+                        group_activities[group] = value.strip()
         
         activity = TrainingActivity(
             plan_id=plan_id,
@@ -464,14 +473,25 @@ def edit_activity(plan_id, id):
         activity.duration_minutes = form.duration_minutes.data
         activity.groups = form.get_groups_dict()
         
-        # Sammle group_activities für group_specific
-        if form.activity_type.data == 'group_specific':
+        # Sammle group_activities für group_specific, special_teams und position_specific
+        if form.activity_type.data == 'group_specific' or form.activity_type.data == 'special_teams':
             group_activities = {}
             for key, value in request.form.items():
                 if key.startswith('group_activity_'):
                     combination_key = key.replace('group_activity_', '')
                     if value and value.strip():
-                        group_activities[combination_key] = value.strip()
+                        # Sortiere die Gruppen im Key, damit Keys konsistent sind
+                        groups = sorted([g.strip() for g in combination_key.split(',')])
+                        sorted_key = ','.join(groups)
+                        group_activities[sorted_key] = value.strip()
+            activity.group_activities = group_activities if group_activities else None
+        elif form.activity_type.data == 'position_specific':
+            group_activities = {}
+            for key, value in request.form.items():
+                if key.startswith('position_activity_'):
+                    group = key.replace('position_activity_', '')
+                    if value and value.strip():
+                        group_activities[group] = value.strip()
             activity.group_activities = group_activities if group_activities else None
         else:
             activity.group_activities = None
