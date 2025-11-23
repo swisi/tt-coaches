@@ -40,9 +40,8 @@
             {% endif %}
         </div>
         
-        {% if form.activity_type.data == 'group_specific' or not form.activity_type.data %}
-        <div>
-            <label class="block text-sm font-medium mb-2">Positionsgruppen</label>
+        <div id="groups-section" style="display: {% if form.activity_type.data == 'group_specific' %}block{% else %}none{% endif %};">
+            <label class="block text-sm font-medium mb-2">Positionsgruppen (mehrere auswählbar)</label>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <label class="flex items-center">
                     {{ form.group_OL(class="mr-2") }}
@@ -78,7 +77,27 @@
                 </label>
             </div>
         </div>
-        {% endif %}
+        
+        <script>
+            // Zeige/Verstecke Positionsgruppen basierend auf Aktivitätstyp
+            document.addEventListener('DOMContentLoaded', function() {
+                const activityTypeSelect = document.querySelector('select[name="activity_type"]');
+                const groupsSection = document.getElementById('groups-section');
+                
+                if (activityTypeSelect && groupsSection) {
+                    function toggleGroups() {
+                        if (activityTypeSelect.value === 'group_specific') {
+                            groupsSection.style.display = 'block';
+                        } else {
+                            groupsSection.style.display = 'none';
+                        }
+                    }
+                    
+                    activityTypeSelect.addEventListener('change', toggleGroups);
+                    toggleGroups(); // Initial aufrufen
+                }
+            });
+        </script>
         
         <div>
             <label class="block text-sm font-medium mb-2">{{ form.notes.label }}</label>

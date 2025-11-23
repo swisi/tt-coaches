@@ -104,7 +104,7 @@ class TrainingPlanForm(FlaskForm):
 
 class TrainingActivityForm(FlaskForm):
     activity_name = StringField('Aktivitätsname', validators=[DataRequired(), Length(max=200)])
-    activity_type = SelectField('Aktivitätstyp', choices=ACTIVITY_TYPES, validators=[DataRequired()])
+    activity_type = SelectField('Aktivitätstyp', choices=ACTIVITY_TYPES, validators=[DataRequired()], default='team_wide')
     duration_minutes = IntegerField('Dauer (Minuten)', validators=[DataRequired()])
     notes = TextAreaField('Notizen', validators=[Optional()])
     

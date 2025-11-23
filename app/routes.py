@@ -401,6 +401,8 @@ def copy_training_plan(id):
 def new_activity(plan_id):
     plan = TrainingPlan.query.get_or_404(plan_id)
     form = TrainingActivityForm()
+    # Setze Standard-Wert auf 'team_wide'
+    form.activity_type.data = 'team_wide'
     
     if form.validate_on_submit():
         # Nächste Order-Nummer finden
