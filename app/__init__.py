@@ -36,5 +36,15 @@ def create_app(config_class=Config):
     import os
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
+    # Datenbank-Verzeichnis erstellen (falls nicht vorhanden)
+    db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+    if db_uri.startswith('sqlite:///'):
+        # Extrahiere den Pfad aus der SQLite URI
+        db_path = db_uri.replace('sqlite:///', '')
+        # Entferne den Dateinamen, um nur das Verzeichnis zu bekommen
+        db_dir = os.path.dirname(db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
+    
     return app
 

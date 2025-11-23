@@ -13,7 +13,7 @@ services:
       - FLASK_APP=run.py
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - DATABASE_PATH=/app/data
-      - DATABASE_URL=sqlite:///data/coaches.db
+      - DATABASE_URL=sqlite:////app/data/coaches.db
       - UPLOAD_BASE=/app
     volumes:
       # Datenbank-Persistenz
