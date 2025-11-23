@@ -95,17 +95,25 @@
                         <td class="px-4 py-3">{{ activity.duration_minutes }}</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
-                                <span class="activity-name">{{ activity.activity_name }}</span>
+                                <span class="activity-name">
+                                    {% if activity.activity_type == 'group_specific' and activity.group_activities %}
+                                        Gruppen
+                                    {% else %}
+                                        {{ activity.activity_name }}
+                                    {% endif %}
+                                </span>
                                 <span id="status-{{ activity.id }}" class="status-badge"></span>
                             </div>
                             {% if activity.notes %}
                             <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">{{ activity.notes }}</p>
                             {% endif %}
                         </td>
-                        {% for group in ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB'] %}
-                        <td class="px-4 py-3 text-center">
-                            {% if activity.groups and activity.groups.get(group) %}✓{% else %}-{% endif %}
-                        </td>
+                        {# Verwende get_group_cells() Methode für alle Aktivitätstypen #}
+                        {% set cells = activity.get_group_cells() %}
+                        {% for cell in cells %}
+                            <td class="px-4 py-3 text-center" {% if cell.colspan > 1 %}colspan="{{ cell.colspan }}"{% endif %}>
+                                {{ cell.text }}
+                            </td>
                         {% endfor %}
                         {% if current_user.is_admin %}
                         <td class="px-4 py-3">

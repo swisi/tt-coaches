@@ -110,6 +110,7 @@ def export_backup():
             'duration_minutes': activity.duration_minutes,
             'activity_name': activity.activity_name,
             'activity_type': activity.activity_type,
+            'group_activities': activity.group_activities,
             'groups': activity.groups,
             'notes': activity.notes,
             'order': activity.order,
@@ -348,6 +349,7 @@ def import_backup(backup_json, clear_existing=False):
                     duration_minutes=activity_data['duration_minutes'],
                     activity_name=activity_data['activity_name'],
                     activity_type=activity_data['activity_type'],
+                    group_activities=activity_data.get('group_activities'),
                     groups=activity_data.get('groups'),
                     notes=activity_data.get('notes'),
                     order=activity_data.get('order', 0)

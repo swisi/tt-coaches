@@ -408,12 +408,22 @@ def new_activity(plan_id):
         # Nächste Order-Nummer finden
         max_order = db.session.query(func.max(TrainingActivity.order)).filter_by(plan_id=plan_id).scalar() or 0
         
+        # Sammle group_activities für group_specific
+        group_activities = {}
+        if form.activity_type.data == 'group_specific':
+            for key, value in request.form.items():
+                if key.startswith('group_activity_'):
+                    combination_key = key.replace('group_activity_', '')
+                    if value and value.strip():
+                        group_activities[combination_key] = value.strip()
+        
         activity = TrainingActivity(
             plan_id=plan_id,
             activity_name=form.activity_name.data,
             activity_type=form.activity_type.data,
             duration_minutes=form.duration_minutes.data,
             groups=form.get_groups_dict(),
+            group_activities=group_activities if group_activities else None,
             notes=form.notes.data or None,
             order=max_order + 1
         )
@@ -453,6 +463,19 @@ def edit_activity(plan_id, id):
         activity.activity_type = form.activity_type.data
         activity.duration_minutes = form.duration_minutes.data
         activity.groups = form.get_groups_dict()
+        
+        # Sammle group_activities für group_specific
+        if form.activity_type.data == 'group_specific':
+            group_activities = {}
+            for key, value in request.form.items():
+                if key.startswith('group_activity_'):
+                    combination_key = key.replace('group_activity_', '')
+                    if value and value.strip():
+                        group_activities[combination_key] = value.strip()
+            activity.group_activities = group_activities if group_activities else None
+        else:
+            activity.group_activities = None
+        
         activity.notes = form.notes.data or None
         
         # Zeiten neu berechnen

@@ -153,9 +153,10 @@ class TrainingActivity(db.Model):
     time_from = db.Column(db.Time, nullable=False)
     time_to = db.Column(db.Time, nullable=False)
     duration_minutes = db.Column(db.Integer, nullable=False)
-    activity_name = db.Column(db.String(200), nullable=False)
+    activity_name = db.Column(db.String(200), nullable=False)  # Für team_wide, prepractice, special_teams
     activity_type = db.Column(db.String(50), nullable=False)  # prepractice, team_wide, group_specific, special_teams
-    groups = db.Column(db.JSON)  # {OL: true, DL: false, ...}
+    groups = db.Column(db.JSON)  # {OL: true, DL: false, ...} - welche Gruppen aktiv sind
+    group_activities = db.Column(db.JSON)  # {"OL,DL": "OL/DL ST Line", "LB,RB": "LB & RB"} - Aktivitätsnamen pro Gruppenkombination
     notes = db.Column(db.Text)
     order = db.Column(db.Integer, nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -165,6 +166,91 @@ class TrainingActivity(db.Model):
         if not self.groups:
             return []
         return [group for group, active in self.groups.items() if active]
+    
+    def get_group_combinations(self):
+        """
+        Gibt die Gruppenkombinationen in der richtigen Reihenfolge zurück.
+        Returns: List of tuples (group_list, activity_name)
+        """
+        if self.activity_type != 'group_specific' or not self.group_activities:
+            return []
+        
+        GROUPS_ORDER = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB']
+        
+        # Konvertiere group_activities dict in Liste von Tupeln
+        combinations = []
+        for key, activity_name in self.group_activities.items():
+            groups = [g.strip() for g in key.split(',')]
+            # Sortiere Gruppen nach GROUPS_ORDER
+            groups.sort(key=lambda g: GROUPS_ORDER.index(g) if g in GROUPS_ORDER else 999)
+            combinations.append((groups, activity_name))
+        
+        # Sortiere Kombinationen nach der ersten Gruppe
+        combinations.sort(key=lambda x: GROUPS_ORDER.index(x[0][0]) if x[0] and x[0][0] in GROUPS_ORDER else 999)
+        
+        return combinations
+    
+    def get_group_cells(self):
+        """
+        Gibt eine Liste von Zellen für die Gruppen-Spalten zurück.
+        Jede Zelle ist ein Dict mit 'colspan', 'text', 'groups'
+        """
+        GROUPS_ORDER = ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB']
+        
+        if self.activity_type == 'team_wide' or self.activity_type == 'prepractice' or self.activity_type == 'special_teams':
+            # Alle Gruppen zusammen
+            return [{'colspan': 8, 'text': self.activity_name, 'groups': GROUPS_ORDER}]
+        
+        if self.activity_type == 'group_specific' and self.group_activities:
+            # Erstelle Mapping von Gruppe zu Aktivitätsname
+            group_to_activity = {}
+            for key, activity_name in self.group_activities.items():
+                groups = [g.strip() for g in key.split(',')]
+                for group in groups:
+                    if group in GROUPS_ORDER:
+                        group_to_activity[group] = activity_name
+            
+            # Erstelle Zellen mit merged cells
+            cells = []
+            i = 0
+            while i < len(GROUPS_ORDER):
+                group = GROUPS_ORDER[i]
+                if group in group_to_activity:
+                    # Finde alle aufeinanderfolgenden Gruppen mit demselben Text
+                    activity_text = group_to_activity[group]
+                    span_groups = [group]
+                    j = i + 1
+                    while j < len(GROUPS_ORDER) and GROUPS_ORDER[j] in group_to_activity and group_to_activity[GROUPS_ORDER[j]] == activity_text:
+                        span_groups.append(GROUPS_ORDER[j])
+                        j += 1
+                    
+                    cells.append({
+                        'colspan': len(span_groups),
+                        'text': activity_text,
+                        'groups': span_groups
+                    })
+                    i = j
+                else:
+                    # Keine Aktivität für diese Gruppe
+                    cells.append({
+                        'colspan': 1,
+                        'text': '-',
+                        'groups': [group]
+                    })
+                    i += 1
+            
+            return cells
+        
+        # Fallback: Einzelne Checkmarks
+        cells = []
+        for group in GROUPS_ORDER:
+            active = self.groups and self.groups.get(group, False)
+            cells.append({
+                'colspan': 1,
+                'text': '✓' if active else '-',
+                'groups': [group]
+            })
+        return cells
     
     def get_activity_type_color(self):
         colors = {
