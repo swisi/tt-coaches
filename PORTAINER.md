@@ -120,6 +120,20 @@ DATABASE_URL=sqlite:////app/data/coaches.db
 2. Healthcheck: `docker inspect coaches-app`
 3. Umgebungsvariablen in Portainer
 
+### Fehler: "Not Found" bei Zertifikatsdateien
+
+**Ursache:** Dateien existieren nicht im Volume oder Volume ist nicht richtig gemountet.
+
+**Lösung:**
+1. Prüfe, ob das Volume `coaches-uploads` existiert und Dateien enthält:
+   ```bash
+   docker volume inspect coaches-uploads
+   docker exec coaches-app ls -la /app/app/static/uploads/certificates/
+   ```
+2. Nach einem Restore: Stelle sicher, dass die Dateien korrekt extrahiert wurden
+3. Die Anwendung hat jetzt eine explizite Route zum Servieren von Dateien - nach dem nächsten Update sollte das Problem behoben sein
+4. Falls das Problem weiterhin besteht, prüfe die Volume-Mount-Konfiguration in Portainer
+
 ## 📝 Erster Admin-Benutzer
 
 Beim ersten Start wird automatisch ein Admin-Benutzer erstellt:
