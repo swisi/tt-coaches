@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Mein Profil - CoachManager{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Mein Profil</h1>
+    
+    <form method="POST" class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 space-y-6">
+        {{ form.hidden_tag() }}
+        
+        {% if form.errors %}
+        <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-6">
+            <p class="font-semibold text-red-800 dark:text-red-200 mb-2">Bitte korrigiere die folgenden Fehler:</p>
+            <ul class="list-disc list-inside text-sm text-red-700 dark:text-red-300 space-y-1">
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors %}
+                        <li>{{ form[field].label.text }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium mb-2">{{ form.first_name.label }} *</label>
+                {{ form.first_name(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+                {% if form.first_name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors[0] }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-2">{{ form.last_name.label }} *</label>
+                {{ form.last_name(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+                {% if form.last_name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors[0] }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.birth_date.label }} *</label>
+            {{ form.birth_date(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700", type="date") }}
+            {% if form.birth_date.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.birth_date.errors[0] }}</p>
+            {% endif %}
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Format: TT.MM.JJJJ oder YYYY-MM-DD</p>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.address.label }} *</label>
+            {{ form.address(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.address.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.address.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium mb-2">{{ form.zip_code.label }} *</label>
+                {{ form.zip_code(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+                {% if form.zip_code.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.zip_code.errors[0] }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-2">{{ form.city.label }} *</label>
+                {{ form.city(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+                {% if form.city.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.city.errors[0] }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.mobile_phone.label }} *</label>
+            {{ form.mobile_phone(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.mobile_phone.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.mobile_phone.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.team.label }} *</label>
+            {{ form.team(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.team.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.team.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.license_number.label }}</label>
+            {{ form.license_number(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.license_number.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.license_number.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.new_password.label }}</label>
+            {{ form.new_password(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.new_password.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.new_password.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="flex gap-4">
+            <button type="submit" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium">
+                Speichern
+            </button>
+            <a href="{{ url_for('routes.dashboard') }}" class="px-6 py-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-50 rounded-lg font-medium">
+                Abbrechen
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Backup & Restore - CoachManager{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold">Backup & Restore</h1>
+        <p class="text-slate-600 dark:text-slate-400 mt-2">
+            Sichere alle Daten oder stelle sie aus einem Backup wieder her
+        </p>
+    </div>
+    
+    <!-- Backup Bereich -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">📥 Backup erstellen</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-4">
+            Erstelle eine vollständige Sicherung aller Daten (Benutzer, Zertifikate, Erfahrungen, Trainingspläne) 
+            <strong>inklusive aller hochgeladenen Dateien</strong> (Zertifikatsdokumente, Bilder, PDFs).
+            Die Backup-Datei wird als ZIP-Archiv heruntergeladen.
+        </p>
+        <a href="{{ url_for('routes.backup_data') }}" 
+           class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+            <span class="mr-2">💾</span>
+            Backup erstellen
+        </a>
+    </div>
+    
+    <!-- Restore Bereich -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">📤 Backup wiederherstellen</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-4">
+            Stelle Daten aus einer Backup-Datei wieder her. 
+            <strong class="text-red-600 dark:text-red-400">⚠️ ACHTUNG:</strong> Wenn "Bestehende Daten löschen" aktiviert ist, werden alle aktuellen Daten gelöscht!
+        </p>
+        
+        <form method="POST" action="{{ url_for('routes.restore_data') }}" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    Backup-Datei auswählen (ZIP oder JSON)
+                </label>
+                <input type="file" name="backup_file" accept=".zip,.json" required
+                       class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50">
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    ZIP-Dateien enthalten Daten + Dateien, JSON-Dateien nur Daten (für Rückwärtskompatibilität)
+                </p>
+            </div>
+            
+            <div class="flex items-center">
+                <input type="checkbox" name="clear_existing" id="clear_existing"
+                       class="w-4 h-4 text-red-600 border-slate-300 rounded focus:ring-red-500">
+                <label for="clear_existing" class="ml-2 text-sm font-medium text-red-600 dark:text-red-400">
+                    ⚠️ Bestehende Daten löschen (alle aktuellen Daten werden entfernt!)
+                </label>
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" 
+                        class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                    Wiederherstellen
+                </button>
+                <a href="{{ url_for('routes.admin_backup_restore') }}" 
+                   class="px-6 py-3 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-50 rounded-lg font-medium">
+                    Abbrechen
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Informationen -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-2">ℹ️ Wichtige Hinweise</h3>
+        <ul class="space-y-2 text-sm text-blue-800 dark:text-blue-300">
+            <li>• Backups enthalten alle Daten inklusive Passwörter (gehasht)</li>
+            <li>• <strong>ZIP-Backups enthalten auch alle hochgeladenen Dateien</strong> (Zertifikate, Bilder, PDFs)</li>
+            <li>• Backup-Dateien sollten sicher aufbewahrt werden</li>
+            <li>• Bei der Wiederherstellung werden bestehende Daten nur gelöscht, wenn die Option aktiviert ist</li>
+            <li>• Ohne "Bestehende Daten löschen" werden nur neue Einträge hinzugefügt (Duplikate werden übersprungen)</li>
+            <li>• Die Wiederherstellung kann einige Minuten dauern, je nach Datenmenge</li>
+            <li>• JSON-Dateien (alte Backups) werden weiterhin unterstützt, enthalten aber keine Dateien</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CoachManager{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold">Willkommen, {{ current_user.first_name or current_user.email }}!</h1>
+        <p class="text-slate-600 dark:text-slate-400 mt-2">
+            {% if current_user.get_total_experience_years() > 0 %}
+                {{ current_user.get_total_experience_years() }} Jahre Coaching-Erfahrung
+            {% else %}
+                Beginne deine Coaching-Reise!
+            {% endif %}
+        </p>
+    </div>
+    
+    <!-- Heutiger Trainingsplan -->
+    {% if today_plan %}
+    <div class="bg-green-50 dark:bg-green-900/20 border-2 border-green-500 rounded-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="px-3 py-1 bg-green-500 text-white text-sm font-bold rounded-full">HEUTE</span>
+                    <span class="text-lg font-semibold">{{ today_plan.get_weekday_name() }}</span>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">{{ today_plan.title }}</h2>
+                <p class="text-slate-600 dark:text-slate-400">
+                    {{ today_plan.start_time.strftime('%H:%M') }} Uhr • {{ today_plan.team_name }}
+                </p>
+            </div>
+            <a href="{{ url_for('routes.training_plan_detail', id=today_plan.id) }}" 
+               class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                Details ansehen →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Profilstatus -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Profilstatus</h2>
+        {% if current_user.is_profile_complete() %}
+            <div class="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <span>✓</span>
+                <span>Dein Profil ist vollständig!</span>
+            </div>
+        {% else %}
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                    <span>⚠</span>
+                    <span>Dein Profil ist noch nicht vollständig.</span>
+                </div>
+                <a href="{{ url_for('routes.profile') }}" 
+                   class="inline-block px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm">
+                    Profil vervollständigen →
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Statistiken -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 relative">
+            <div class="flex items-start justify-between mb-2">
+                <h3 class="text-lg font-semibold">Zertifikate</h3>
+                <a href="{{ url_for('routes.new_certificate') }}" 
+                   class="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                   title="Neues Zertifikat hinzufügen">
+                    <span class="text-xl">+</span>
+                </a>
+            </div>
+            <p class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-4">{{ cert_count }}</p>
+            <a href="{{ url_for('routes.certificates') }}" 
+               class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors">
+                Alle ansehen
+            </a>
+        </div>
+        
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 relative">
+            <div class="flex items-start justify-between mb-2">
+                <h3 class="text-lg font-semibold">Coaching-Erfahrung</h3>
+                <a href="{{ url_for('routes.new_experience') }}" 
+                   class="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                   title="Neue Erfahrung hinzufügen">
+                    <span class="text-xl">+</span>
+                </a>
+            </div>
+            <p class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-4">
+                {{ experience_years }} Jahre
+            </p>
+            <a href="{{ url_for('routes.experience') }}" 
+               class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors">
+                Alle ansehen
+            </a>
+        </div>
+    </div>
+    
+    <!-- Neueste Einträge -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Neueste Zertifikate -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Neueste Zertifikate</h3>
+            {% if recent_certificates %}
+                <div class="space-y-3">
+                    {% for cert in recent_certificates %}
+                    <div class="border-l-4 border-purple-500 pl-4 py-2">
+                        <p class="font-medium">{{ cert.title }}</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">
+                            {{ cert.organization }} • {{ cert.acquisition_date.strftime('%d.%m.%Y') }}
+                        </p>
+                        {% if cert.valid_until %}
+                            {% if cert.is_expired() %}
+                                <span class="text-xs text-red-600 dark:text-red-400">Abgelaufen</span>
+                            {% elif cert.expires_soon() %}
+                                <span class="text-xs text-yellow-600 dark:text-yellow-400">Läuft bald ab</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-slate-500 dark:text-slate-400">Noch keine Zertifikate vorhanden.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Neueste Erfahrungen -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Neueste Erfahrungen</h3>
+            {% if recent_experiences %}
+                <div class="space-y-3">
+                    {% for exp in recent_experiences %}
+                    <div class="border-l-4 border-purple-500 pl-4 py-2">
+                        <p class="font-medium">{{ exp.position }}</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">
+                            {{ exp.team }} • {{ exp.start_year }}{% if exp.end_year %} - {{ exp.end_year }}{% else %} - heute{% endif %}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-slate-500 dark:text-slate-400">Noch keine Erfahrungen vorhanden.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

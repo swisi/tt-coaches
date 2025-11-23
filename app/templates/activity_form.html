@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - CoachManager{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">{{ title }}</h1>
+    <p class="text-slate-600 dark:text-slate-400 mb-6">Trainingsplan: {{ plan.title }}</p>
+    
+    <form method="POST" class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 space-y-6">
+        {{ form.hidden_tag() }}
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.activity_name.label }} *</label>
+            {{ form.activity_name(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.activity_name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.activity_name.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.activity_type.label }} *</label>
+            {{ form.activity_type(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.activity_type.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.activity_type.errors[0] }}</p>
+            {% endif %}
+            <p class="mt-1 text-xs text-slate-500">
+                Prepractice: Rückwärts vom Trainingsstart berechnet<br>
+                Team-Wide: Für das gesamte Team<br>
+                Group-Specific: Für Positionsgruppen<br>
+                Special Teams: Für Special Teams Training
+            </p>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.duration_minutes.label }} *</label>
+            {{ form.duration_minutes(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
+            {% if form.duration_minutes.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.duration_minutes.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        {% if form.activity_type.data == 'group_specific' or not form.activity_type.data %}
+        <div>
+            <label class="block text-sm font-medium mb-2">Positionsgruppen</label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <label class="flex items-center">
+                    {{ form.group_OL(class="mr-2") }}
+                    <span>OL</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_DL(class="mr-2") }}
+                    <span>DL</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_LB(class="mr-2") }}
+                    <span>LB</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_RB(class="mr-2") }}
+                    <span>RB</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_TE(class="mr-2") }}
+                    <span>TE</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_WR(class="mr-2") }}
+                    <span>WR</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_QB(class="mr-2") }}
+                    <span>QB</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.group_DB(class="mr-2") }}
+                    <span>DB</span>
+                </label>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div>
+            <label class="block text-sm font-medium mb-2">{{ form.notes.label }}</label>
+            {{ form.notes(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700", rows=3) }}
+            {% if form.notes.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.notes.errors[0] }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="flex gap-4">
+            <button type="submit" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium">
+                Speichern
+            </button>
+            <a href="{{ url_for('routes.training_plan_detail', id=plan.id) }}" 
+               class="px-6 py-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-50 rounded-lg font-medium">
+                Abbrechen
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

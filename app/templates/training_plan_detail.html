@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plan.title }} - CoachManager{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold">{{ plan.title }}</h1>
+            <p class="text-slate-600 dark:text-slate-400 mt-2">
+                {{ plan.get_weekday_name() }} • {{ plan.start_time.strftime('%H:%M') }} Uhr • {{ plan.team_name }}
+            </p>
+        </div>
+        {% if current_user.is_admin %}
+        <div class="flex gap-2">
+            <a href="{{ url_for('routes.copy_training_plan', id=plan.id) }}" 
+               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                Kopieren
+            </a>
+            <a href="{{ url_for('routes.edit_training_plan', id=plan.id) }}" 
+               class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg text-sm">
+                Bearbeiten
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <p class="text-sm text-slate-500 dark:text-slate-500">Zeitraum</p>
+                <p class="font-medium">{{ plan.start_date.strftime('%d.%m.%Y') }} - {{ plan.end_date.strftime('%d.%m.%Y') }}</p>
+            </div>
+            {% if plan.dresscode %}
+            <div>
+                <p class="text-sm text-slate-500 dark:text-slate-500">Dresscode</p>
+                <p class="font-medium">{{ plan.dresscode }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if plan.focus %}
+        <div class="mb-4">
+            <p class="text-sm text-slate-500 dark:text-slate-500 mb-1">Trainingsfokus</p>
+            <p>{{ plan.focus }}</p>
+        </div>
+        {% endif %}
+        
+        {% if plan.goals %}
+        <div>
+            <p class="text-sm text-slate-500 dark:text-slate-500 mb-1">Ziele/Notizen</p>
+            <p>{{ plan.goals }}</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if current_user.is_admin %}
+    <div class="flex justify-end">
+        <a href="{{ url_for('routes.new_activity', plan_id=plan.id) }}" 
+           class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium">
+            + Aktivität hinzufügen
+        </a>
+    </div>
+    {% endif %}
+    
+    {% if activities %}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+        <div id="activities-container" class="overflow-x-auto">
+            <table class="w-full" id="activities-table">
+                <thead class="bg-slate-100 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium">Von</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">Bis</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">Min</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">Aktivität</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">OL</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">DL</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">LB</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">RB</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">TE</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">WR</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">QB</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium">DB</th>
+                        {% if current_user.is_admin %}
+                        <th class="px-4 py-3 text-left text-xs font-medium">Aktionen</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700" id="activities-tbody">
+                    {% for activity in activities %}
+                    <tr data-activity-id="{{ activity.id }}" 
+                        class="activity-row {% if activity.activity_type == 'prepractice' %}bg-amber-50 dark:bg-amber-900/20{% elif activity.activity_type == 'team_wide' %}bg-purple-50 dark:bg-purple-900/20{% elif activity.activity_type == 'special_teams' %}bg-green-50 dark:bg-green-900/20{% endif %}">
+                        <td class="px-4 py-3 time-from">{{ activity.time_from.strftime('%H:%M') }}</td>
+                        <td class="px-4 py-3 time-to">{{ activity.time_to.strftime('%H:%M') }}</td>
+                        <td class="px-4 py-3">{{ activity.duration_minutes }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <span class="activity-name">{{ activity.activity_name }}</span>
+                                <span id="status-{{ activity.id }}" class="status-badge"></span>
+                            </div>
+                            {% if activity.notes %}
+                            <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">{{ activity.notes }}</p>
+                            {% endif %}
+                        </td>
+                        {% for group in ['OL', 'DL', 'LB', 'RB', 'TE', 'WR', 'QB', 'DB'] %}
+                        <td class="px-4 py-3 text-center">
+                            {% if activity.groups and activity.groups.get(group) %}✓{% else %}-{% endif %}
+                        </td>
+                        {% endfor %}
+                        {% if current_user.is_admin %}
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                <a href="{{ url_for('routes.edit_activity', plan_id=plan.id, id=activity.id) }}" 
+                                   class="px-2 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-xs">
+                                    Bearbeiten
+                                </a>
+                                <form method="POST" action="{{ url_for('routes.delete_activity', plan_id=plan.id, id=activity.id) }}" 
+                                      onsubmit="return confirm('Möchtest du diese Aktivität wirklich löschen?');" class="inline">
+                                    <button type="submit" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs">
+                                        Löschen
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-12 text-center">
+        <p class="text-slate-500 dark:text-slate-400 mb-4">Noch keine Aktivitäten vorhanden.</p>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('routes.new_activity', plan_id=plan.id) }}" 
+           class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium inline-block">
+            Erste Aktivität hinzufügen
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Live-Tracking
+const planId = {{ plan.id }};
+const isToday = {{ 'true' if plan.is_active_today() else 'false' }};
+
+function updateActivityStatus() {
+    if (!isToday) return;
+    
+    fetch(`/api/training-plans/${planId}/activities/status`)
+        .then(response => response.json())
+        .then(data => {
+            Object.keys(data).forEach(activityId => {
+                const badge = document.getElementById(`status-${activityId}`);
+                const row = document.querySelector(`[data-activity-id="${activityId}"]`);
+                
+                if (data[activityId] === 'now') {
+                    badge.innerHTML = '🔴 JETZT';
+                    badge.className = 'status-badge px-2 py-1 bg-green-500 text-white text-xs rounded font-bold';
+                    row.classList.add('ring-2', 'ring-green-500');
+                    
+                    // Akustisches Signal (nur einmal)
+                    if (!row.dataset.notified) {
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMRBSC');
+                        audio.play().catch(() => {});
+                        row.dataset.notified = 'true';
+                    }
+                } else if (data[activityId] === 'soon') {
+                    badge.innerHTML = '⚠️ IN 2 MIN';
+                    badge.className = 'status-badge px-2 py-1 bg-yellow-500 text-white text-xs rounded font-bold animate-pulse';
+                    row.classList.add('ring-2', 'ring-yellow-500');
+                    
+                    // Akustisches Warnsignal
+                    if (!row.dataset.warned) {
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMRBSC');
+                        audio.play().catch(() => {});
+                        row.dataset.warned = 'true';
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error updating status:', error));
+}
+
+// Alle 10 Sekunden aktualisieren
+if (isToday) {
+    updateActivityStatus();
+    setInterval(updateActivityStatus, 10000);
+}
+</script>
+{% endblock %}
+
