@@ -89,6 +89,11 @@ class Config:
     # Session settings
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     
+    # Server Name für url_for() mit _external=True
+    # Wird verwendet, um absolute URLs zu generieren
+    # Falls nicht gesetzt, verwendet Flask den Host-Header der Request
+    SERVER_NAME = os.environ.get('SERVER_NAME')  # z.B. 'tt-coaches.swisi.net' oder None
+    
     # Zitadel OAuth2/OIDC settings
     ZITADEL_ISSUER = os.environ.get('ZITADEL_ISSUER') or 'https://your-zitadel-instance.com'
     ZITADEL_CLIENT_ID = os.environ.get('ZITADEL_CLIENT_ID') or ''

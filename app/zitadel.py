@@ -44,7 +44,17 @@ def get_zitadel_authorize_url(prompt=None):
     Args:
         prompt: Optional. 'login' für Login, 'register' für Registrierung
     """
-    redirect_uri = url_for('auth.callback', _external=True)
+    # Verwende ZITADEL_REDIRECT_URI aus Config, falls gesetzt, sonst generiere dynamisch
+    redirect_uri = current_app.config.get('ZITADEL_REDIRECT_URI')
+    if not redirect_uri or redirect_uri == 'http://localhost:5000/auth/callback':
+        # Fallback: Generiere dynamisch basierend auf aktueller Request
+        redirect_uri = url_for('auth.callback', _external=True)
+    
+    # Entferne doppelte Slashes (falls vorhanden)
+    redirect_uri = redirect_uri.replace('//auth', '/auth')
+    
+    current_app.logger.debug(f"Using redirect_uri: {redirect_uri}")
+    
     kwargs = {}
     if prompt:
         kwargs['prompt'] = prompt
