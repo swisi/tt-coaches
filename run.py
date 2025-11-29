@@ -41,19 +41,31 @@ def init_db():
                         raise
         
         # Migrationen ausführen
-        from flask_migrate import upgrade
-        try:
-            upgrade()
-            print("Datenbank-Migrationen erfolgreich ausgeführt.")
-        except Exception as e:
-            print(f"Warnung bei Migrationen: {e}")
-            # Fallback: db.create_all() falls Migrationen fehlschlagen
+        import os
+        migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+        if not os.path.exists(migrations_dir):
+            print(f"WARNUNG: migrations Verzeichnis nicht gefunden: {migrations_dir}")
+            print("Verwende db.create_all() als Fallback...")
             try:
                 db.create_all()
                 print("Datenbank mit db.create_all() erstellt.")
             except Exception as e2:
                 print(f"FEHLER: Kann Datenbank nicht erstellen: {e2}")
                 raise
+        else:
+            from flask_migrate import upgrade
+            try:
+                upgrade()
+                print("Datenbank-Migrationen erfolgreich ausgeführt.")
+            except Exception as e:
+                print(f"Warnung bei Migrationen: {e}")
+                # Fallback: db.create_all() falls Migrationen fehlschlagen
+                try:
+                    db.create_all()
+                    print("Datenbank mit db.create_all() erstellt.")
+                except Exception as e2:
+                    print(f"FEHLER: Kann Datenbank nicht erstellen: {e2}")
+                    raise
         
         # Ersten Admin erstellen falls keiner existiert
         if not User.query.filter_by(is_admin=True).first():

@@ -49,8 +49,8 @@ docker-compose.yml
 README.md
 *.md
 
-# Migrations (werden zur Laufzeit erstellt)
-migrations/
+# Migrations werden benötigt für flask db upgrade
+# migrations/ - AUSKOMMENTIERT, da Migrationen ins Image müssen
 
 # Backup files
 *.zip
