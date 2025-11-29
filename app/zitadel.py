@@ -192,6 +192,14 @@ def handle_zitadel_callback():
         
         db.session.commit()
         
+        # Stelle sicher, dass der User eine ID hat (wichtig für Flask-Login)
+        db.session.refresh(user)
+        if not user.id:
+            current_app.logger.error(f"User wurde erstellt, hat aber keine ID! User: {user.email}")
+            return None, "Fehler: Benutzer konnte nicht in der Datenbank gespeichert werden"
+        
+        current_app.logger.info(f"User erfolgreich geladen/erstellt: ID={user.id}, Email={user.email}, Zitadel_ID={user.zitadel_user_id}")
+        
         return user, None
         
     except Exception as e:

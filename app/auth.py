@@ -30,11 +30,25 @@ def callback():
     user, error = handle_zitadel_callback()
     
     if error or not user:
+        current_app.logger.error(f"Zitadel Callback Fehler: {error}")
         flash(f'Fehler bei der Anmeldung: {error or "Unbekannter Fehler"}', 'error')
         return redirect(url_for('auth.login'))
     
+    # Debug: Prüfe ob User korrekt geladen wurde
+    if not user.id:
+        current_app.logger.error(f"User hat keine ID! User: {user}")
+        flash('Fehler: Benutzer konnte nicht geladen werden.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    current_app.logger.info(f"Logging in user: ID={user.id}, Email={user.email}, Zitadel_ID={user.zitadel_user_id}")
+    
     # Benutzer einloggen (remember=False, damit Session nicht permanent ist)
-    login_user(user, remember=False)
+    login_result = login_user(user, remember=False)
+    current_app.logger.info(f"login_user result: {login_result}, current_user.is_authenticated: {current_user.is_authenticated}")
+    
+    # Stelle sicher, dass die Session gespeichert wird
+    session.permanent = False
+    session.modified = True
     
     # Weiterleitung - IMMER zu Dashboard, nicht zu Profile
     # Die before_request Funktion wird dann automatisch zu Profile weiterleiten falls nötig
@@ -42,6 +56,7 @@ def callback():
     if not next_page or not next_page.startswith('/'):
         next_page = url_for('routes.dashboard')
     
+    current_app.logger.info(f"Redirecting to: {next_page}")
     flash('Erfolgreich angemeldet!', 'success')
     return redirect(next_page)
 

@@ -47,32 +47,34 @@ MAX_CONTENT_LENGTH=524288000
 
 # Zitadel Instance URL (Issuer)
 # Beispiel: https://your-zitadel-instance.com oder https://tt-auth.swisi.net
-ZITADEL_ISSUER=https://your-zitadel-instance.com
+ZITADEL_ISSUER=https://tt-auth.swisi.net
 
 # OAuth2 Client ID aus Zitadel
 # Wird in der Zitadel OAuth2 Application konfiguriert
-ZITADEL_CLIENT_ID=
+ZITADEL_CLIENT_ID=348851079733051395
 
 # OAuth2 Client Secret aus Zitadel
 # Wird in der Zitadel OAuth2 Application konfiguriert
 # WICHTIG: Geheim halten!
-ZITADEL_CLIENT_SECRET=
+ZITADEL_CLIENT_SECRET=JQbv3ZQvdatjMYCE9PwliPEmbIphi7c3KW90PrnZSpt_F1sNfACT6ZDI8F2sEsbAeHJCIgE
 
 # Redirect URI für OAuth2 Callback
 # Muss in der Zitadel OAuth2 Application als erlaubte Redirect URI konfiguriert sein
 # Für Docker/Portainer: http://your-domain:8091/auth/callback
 # Für lokale Entwicklung: http://localhost:5000/auth/callback oder http://127.0.0.1:3000/auth/callback
-ZITADEL_REDIRECT_URI=http://localhost:5000/auth/callback
+ZITADEL_REDIRECT_URI=https://tt-coaches.swisi.net//auth/callback
 
 # Zitadel Management API URL
 # Normalerweise dieselbe URL wie ZITADEL_ISSUER
 # Wird für Benutzer-Registrierung über die Management API verwendet
-ZITADEL_MANAGEMENT_API_URL=https://your-zitadel-instance.com
+ZITADEL_MANAGEMENT_API_URL=https://tt-auth.swisi.net
 
 # Zitadel Management API Token
 # Service Account Token mit Berechtigung zum Erstellen von Benutzern
 # WICHTIG: Geheim halten!
-ZITADEL_MANAGEMENT_API_TOKEN=
+ZITADEL_MANAGEMENT_API_TOKEN=D4rOw_p3PemBeN5iNlsSwIC39lLE0JM4wV3bhxXLFUXf3wabHWq_0AMvtrrDoYkmK6iWPpc
+
+
 
 # Standard-Rolle für neue Benutzer (optional)
 # Muss in Zitadel konfiguriert sein

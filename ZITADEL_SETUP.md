@@ -20,7 +20,8 @@ Stelle sicher, dass du eine selbst gehostete Zitadel-Instanz hast und die folgen
 5. Notiere dir die Client ID und Client Secret
 
 Client-ID: 348824518581616643
-Client-Sec: b3583K3Gudad6JpU3qlrM3HDHWq1BhJU7jOkh4OIzQExcFH4vVEoOIoOU1Tuq7cz
+
+Client-Sec: jHeRdzohRHz4aA0gPTp6aKMLNowCckfplPclQpd14LOxAKI5DsvHL40OYHl7eXhS
 
 ### 3. Management API Service Account erstellen
 

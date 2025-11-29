@@ -30,6 +30,9 @@ def before_request():
     # Diese Funktion wird nur für Routen im 'routes' Blueprint aufgerufen
     # Auth-Routen sind in einem separaten Blueprint und werden nicht geprüft
     
+    # Debug: Logge Authentifizierungsstatus
+    current_app.logger.debug(f"before_request: endpoint={request.endpoint}, is_authenticated={current_user.is_authenticated}, user_id={current_user.get_id() if current_user.is_authenticated else 'None'}")
+    
     # Nur prüfen wenn Benutzer eingeloggt ist
     if not current_user.is_authenticated:
         return None

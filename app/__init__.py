@@ -41,7 +41,20 @@ def create_app(config_class=Config):
     
     # Upload-Ordner erstellen
     import os
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    except (OSError, PermissionError) as e:
+        # Falls das Verzeichnis nicht erstellt werden kann (z.B. read-only filesystem),
+        # versuche ein lokales Verzeichnis zu verwenden
+        upload_folder = app.config.get('UPLOAD_FOLDER', 'app/static/uploads/certificates')
+        if upload_folder.startswith('/app'):
+            # Fallback zu lokalem Verzeichnis
+            local_upload_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'app', 'static', 'uploads', 'certificates')
+            try:
+                os.makedirs(local_upload_folder, exist_ok=True)
+                app.config['UPLOAD_FOLDER'] = local_upload_folder
+            except (OSError, PermissionError):
+                pass  # Ignoriere Fehler, wenn auch das nicht funktioniert
     
     # Datenbank-Verzeichnis erstellen (falls nicht vorhanden)
     db_uri = app.config['SQLALCHEMY_DATABASE_URI']
@@ -51,7 +64,10 @@ def create_app(config_class=Config):
         # Entferne den Dateinamen, um nur das Verzeichnis zu bekommen
         db_dir = os.path.dirname(db_path)
         if db_dir:
-            os.makedirs(db_dir, exist_ok=True)
+            try:
+                os.makedirs(db_dir, exist_ok=True)
+            except (OSError, PermissionError):
+                pass  # Ignoriere Fehler, wenn das Verzeichnis nicht erstellt werden kann
     
     return app
 
