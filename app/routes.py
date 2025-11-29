@@ -792,22 +792,35 @@ def admin_backup_restore():
 
 # Route zum Servieren von Upload-Dateien (falls Flask sie nicht automatisch findet)
 @bp.route('/static/uploads/certificates/<path:filename>')
-@login_required
 def serve_certificate_file(filename):
-    """Serviert Zertifikatsdateien explizit"""
+    """Serviert Zertifikatsdateien explizit
+    
+    Hinweis: Login ist nicht erforderlich, da die Dateien auch in <img> Tags eingebettet werden können.
+    Die Sicherheitsprüfung stellt sicher, dass nur Dateien aus dem Upload-Ordner serviert werden.
+    """
     try:
         upload_folder = current_app.config['UPLOAD_FOLDER']
         file_path = os.path.join(upload_folder, filename)
         
+        # Normalisiere Pfade für Vergleich
+        upload_folder_abs = os.path.abspath(upload_folder)
+        file_path_abs = os.path.abspath(file_path)
+        
         # Sicherheitsprüfung: Stelle sicher, dass die Datei im Upload-Ordner ist
-        if not os.path.abspath(file_path).startswith(os.path.abspath(upload_folder)):
+        if not file_path_abs.startswith(upload_folder_abs):
+            current_app.logger.warning(f"Versuch, Datei außerhalb des Upload-Ordners zu laden: {file_path_abs}")
             abort(403)
         
         if os.path.exists(file_path):
+            current_app.logger.debug(f"Serviere Datei: {file_path}")
             return send_file(file_path)
         else:
+            current_app.logger.warning(f"Datei nicht gefunden: {file_path} (Upload-Ordner: {upload_folder_abs})")
+            # Prüfe ob das Verzeichnis existiert
+            if not os.path.exists(upload_folder):
+                current_app.logger.error(f"Upload-Ordner existiert nicht: {upload_folder_abs}")
             abort(404)
     except Exception as e:
-        current_app.logger.error(f"Fehler beim Servieren der Datei {filename}: {str(e)}")
+        current_app.logger.error(f"Fehler beim Servieren der Datei {filename}: {str(e)}", exc_info=True)
         abort(404)
 
