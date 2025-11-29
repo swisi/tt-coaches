@@ -53,7 +53,6 @@ def before_request():
         # Prüfe ob wir bereits zu Profile weiterleiten (verhindert Endlosschleife)
         profile_path = url_for('routes.profile')
         if request.path != profile_path and request.path != profile_path.rstrip('/'):
-            current_app.logger.debug(f"before_request: Profile incomplete, redirecting from {request.endpoint} ({request.path}) to profile ({profile_path})")
             flash('Bitte vervollständige zuerst dein Profil.', 'warning')
             return redirect(profile_path)
     

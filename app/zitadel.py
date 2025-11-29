@@ -20,22 +20,49 @@ def init_zitadel_oauth(app):
         client_secret=app.config['ZITADEL_CLIENT_SECRET'],
         server_metadata_url=f"{app.config['ZITADEL_ISSUER']}/.well-known/openid-configuration",
         client_kwargs={
-            'scope': 'openid email profile',
+            'scope': 'openid email profile urn:zitadel:iam:org:project:roles',
             'response_type': 'code'
         }
     )
 
-def get_zitadel_authorize_url():
-    """Gibt die Zitadel Authorization URL zurück"""
+def get_zitadel_authorize_url(prompt=None):
+    """Gibt die Zitadel Authorization URL zurück
+    
+    Args:
+        prompt: Optional. 'login' für Login, 'register' für Registrierung
+    """
     redirect_uri = url_for('auth.callback', _external=True)
-    current_app.logger.debug(f"Zitadel redirect_uri: {redirect_uri}")
-    return oauth.zitadel.authorize_redirect(redirect_uri)
+    kwargs = {}
+    if prompt:
+        kwargs['prompt'] = prompt
+    return oauth.zitadel.authorize_redirect(redirect_uri, **kwargs)
+
+def get_zitadel_logout_url():
+    """Gibt die Zitadel Logout URL zurück"""
+    try:
+        metadata_url = f"{current_app.config['ZITADEL_ISSUER']}/.well-known/openid-configuration"
+        metadata_response = requests.get(metadata_url, timeout=10)
+        metadata_response.raise_for_status()
+        metadata = metadata_response.json()
+        end_session_endpoint = metadata.get('end_session_endpoint')
+        if end_session_endpoint:
+            return end_session_endpoint
+    except Exception as e:
+        current_app.logger.error(f"Fehler beim Abrufen des Logout-Endpoints: {str(e)}")
+    
+    # Fallback: Standard-Zitadel Logout-URL
+    return f"{current_app.config['ZITADEL_ISSUER']}/oidc/v1/end_session"
+
+def get_zitadel_password_change_url():
+    """Gibt die URL für Passwort-Änderung in Zitadel zurück"""
+    issuer = current_app.config['ZITADEL_ISSUER']
+    # Zitadel Passwort-Änderungsseite
+    return f"{issuer}/ui/login/password/change"
 
 def handle_zitadel_callback():
     """Verarbeitet den OAuth2 Callback von Zitadel"""
     try:
         token = oauth.zitadel.authorize_access_token()
-        current_app.logger.debug(f"Zitadel token received: {list(token.keys())}")
         
         # Hole Userinfo separat über den Userinfo-Endpoint
         access_token = token.get('access_token')
@@ -64,7 +91,6 @@ def handle_zitadel_callback():
             user_info_response = requests.get(userinfo_endpoint, headers=headers, timeout=10)
             user_info_response.raise_for_status()
             user_info = user_info_response.json()
-            current_app.logger.debug(f"Userinfo received: {list(user_info.keys())}")
         except Exception as e:
             current_app.logger.error(f"Error fetching userinfo: {str(e)}, Response: {user_info_response.text if 'user_info_response' in locals() else 'N/A'}")
             return None, f"Fehler beim Abrufen der Benutzerinformationen: {str(e)}"
@@ -78,14 +104,59 @@ def handle_zitadel_callback():
         email = user_info.get('email') or user_info.get('preferred_username') or user_info.get('username')
         name = user_info.get('name', '') or user_info.get('given_name', '')
         
-        current_app.logger.debug(f"Extracted: user_id={zitadel_user_id}, email={email}, name={name}")
+        # Extrahiere Rollen aus verschiedenen möglichen Feldern
+        roles = []
+        
+        # Prüfe alle Keys in user_info nach Rollen-Feldern
+        for key, value in user_info.items():
+            # Prüfe auf URN-basierte Rollen-Felder (Zitadel-spezifisch)
+            # Format: 'urn:zitadel:iam:org:project:...:roles' oder 'urn:zitadel:iam:org:project:roles'
+            if 'urn:zitadel' in key.lower() and 'role' in key.lower():
+                if isinstance(value, dict):
+                    # Die Rollen-Namen sind die Keys im Dictionary
+                    # Format: {'admin': {'org_id': 'org_name'}, 'coach': {'org_id': 'org_name'}}
+                    roles.extend(value.keys())
+            
+            # Prüfe auch auf Standard-Rollen-Felder
+            elif key.lower() in ['roles', 'role']:
+                if isinstance(value, list):
+                    roles.extend(value)
+                elif isinstance(value, str):
+                    roles.append(value)
+                elif isinstance(value, dict):
+                    # Wenn es ein Dict ist, könnten die Keys Rollen sein
+                    roles.extend(value.keys())
+        
+        # Prüfe auch auf org_roles, project_roles etc.
+        for key in ['org_roles', 'project_roles', 'org_project_roles']:
+            if key in user_info:
+                role_data = user_info[key]
+                if isinstance(role_data, list):
+                    roles.extend(role_data)
+                elif isinstance(role_data, dict):
+                    # Wenn es ein Dict ist, könnten die Keys Rollen sein
+                    roles.extend(role_data.keys())
+                    for value in role_data.values():
+                        if isinstance(value, list):
+                            roles.extend(value)
+                        elif isinstance(value, str):
+                            roles.append(value)
+        
+        # Entferne Duplikate
+        roles = list(set(roles))
+        
+        # Normalisiere Rollen (lowercase für Vergleich)
+        roles_normalized = [r.lower() if isinstance(r, str) else str(r).lower() for r in roles]
+        
+        # Prüfe ob Admin-Rolle vorhanden ist
+        is_admin = any('admin' in role for role in roles_normalized)
         
         if not zitadel_user_id:
-            current_app.logger.error(f"Missing 'sub' in user_info: {user_info}")
+            current_app.logger.error(f"Missing 'sub' in user_info")
             return None, "Keine User ID in Benutzerinformationen gefunden"
         
         if not email:
-            current_app.logger.error(f"Missing email in user_info: {user_info}")
+            current_app.logger.error(f"Missing email in user_info")
             return None, "Keine E-Mail-Adresse in Benutzerinformationen gefunden"
         
         # Suche oder erstelle Benutzer in der lokalen Datenbank
@@ -104,9 +175,12 @@ def handle_zitadel_callback():
                     email=email,
                     zitadel_user_id=zitadel_user_id,
                     password_hash=None,
-                    is_admin=False
+                    is_admin=is_admin  # Setze Admin-Status basierend auf Rollen
                 )
                 db.session.add(user)
+        else:
+            # Aktualisiere Admin-Status basierend auf aktuellen Rollen
+            user.is_admin = is_admin
         
         # Aktualisiere E-Mail falls sich geändert hat
         if user.email != email:
@@ -198,7 +272,7 @@ def create_zitadel_user(email, password):
             try:
                 # Rollenzuweisung erfolgt normalerweise über Project Memberships
                 # Die genaue Implementierung hängt von der Zitadel-Konfiguration ab
-                current_app.logger.info(f"Standard-Rolle '{default_role}' sollte in Zitadel konfiguriert werden")
+                pass
             except Exception as e:
                 current_app.logger.warning(f"Konnte Rolle nicht zuweisen: {str(e)}")
         
@@ -211,10 +285,4 @@ def create_zitadel_user(email, password):
         current_app.logger.error(f"Fehler beim Erstellen des Zitadel-Benutzers: {str(e)}")
         return False, None, f"Fehler beim Erstellen des Benutzers: {str(e)}"
 
-def get_zitadel_password_change_url():
-    """Gibt die URL für Passwort-Änderung in Zitadel zurück"""
-    issuer = current_app.config['ZITADEL_ISSUER']
-    # Zitadel hat normalerweise eine Passwort-Änderungsseite
-    # Die genaue URL hängt von der Zitadel-Konfiguration ab
-    return f"{issuer}/ui/login/password/change"
 
