@@ -21,40 +21,24 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="p-4 mb-4 rounded-lg {% if category == 'error' %}bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200{% else %}bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200{% endif %}">
+                    <div class="p-4 mb-4 rounded-lg {% if category == 'error' %}bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200{% elif category == 'success' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200{% else %}bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
         
-        <form method="POST" class="space-y-6">
-            {{ form.hidden_tag() }}
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    {{ form.email.label }}
-                </label>
-                {{ form.email(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent") }}
-                {% if form.email.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.email.errors[0] }}</p>
-                {% endif %}
+        <div class="space-y-6">
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p class="text-sm text-blue-800 dark:text-blue-200 text-center">
+                    Die Anmeldung erfolgt über Zitadel. Klicke auf den Button unten, um dich anzumelden.
+                </p>
             </div>
             
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    {{ form.password.label }}
-                </label>
-                {{ form.password(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent") }}
-                {% if form.password.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.password.errors[0] }}</p>
-                {% endif %}
-            </div>
-            
-            <button type="submit" class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
-                Anmelden
-            </button>
-        </form>
+            <a href="{{ url_for('auth.login') }}" class="block w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-center">
+                Mit Zitadel anmelden
+            </a>
+        </div>
         
         <div class="mt-6 text-center">
             <p class="text-slate-600 dark:text-slate-400">

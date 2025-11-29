@@ -23,7 +23,14 @@ def create_app(config_class=Config):
     from app.models import User
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        try:
+            return User.query.get(int(user_id))
+        except (ValueError, TypeError):
+            return None
+    
+    # Zitadel OAuth initialisieren
+    from app.zitadel import init_zitadel_oauth
+    init_zitadel_oauth(app)
     
     # Blueprints registrieren
     from app.auth import bp as auth_bp

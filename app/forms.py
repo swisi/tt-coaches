@@ -67,8 +67,6 @@ class ProfileForm(FlaskForm):
     mobile_phone = StringField('Mobiltelefon', validators=[DataRequired(), Length(max=20)])
     team = SelectField('Team', choices=TEAMS, validators=[DataRequired()])
     license_number = StringField('Lizenznummer', validators=[Optional(), Length(max=50)])
-    new_password = PasswordField('Neues Passwort (leer lassen = keine Änderung)', 
-                                validators=[Optional(), Length(min=8, message='Passwort muss mindestens 8 Zeichen lang sein')])
 
 class CertificateForm(FlaskForm):
     title = StringField('Titel des Zertifikats', validators=[DataRequired(), Length(max=200)])
@@ -139,6 +137,4 @@ class AdminUserForm(FlaskForm):
     team = SelectField('Team', choices=TEAMS, validators=[DataRequired()])
     license_number = StringField('Lizenznummer', validators=[Optional(), Length(max=50)])
     is_admin = BooleanField('Ist Administrator', default=False)
-    new_password = PasswordField('Neues Passwort (leer lassen = keine Änderung)', 
-                                validators=[Optional(), Length(min=8, message='Passwort muss mindestens 8 Zeichen lang sein')])
 

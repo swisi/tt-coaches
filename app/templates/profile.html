@@ -99,12 +99,11 @@
             {% endif %}
         </div>
         
-        <div>
-            <label class="block text-sm font-medium mb-2">{{ form.new_password.label }}</label>
-            {{ form.new_password(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700") }}
-            {% if form.new_password.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ form.new_password.errors[0] }}</p>
-            {% endif %}
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p class="text-sm text-blue-800 dark:text-blue-200">
+                <strong>Passwort ändern:</strong> Dein Passwort wird über Zitadel verwaltet. 
+                Du kannst es dort ändern, wenn du dich das nächste Mal anmeldest.
+            </p>
         </div>
         
         <div class="flex gap-4">

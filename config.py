@@ -33,4 +33,16 @@ class Config:
     
     # Session settings
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    
+    # Zitadel OAuth2/OIDC settings
+    ZITADEL_ISSUER = os.environ.get('ZITADEL_ISSUER') or 'https://your-zitadel-instance.com'
+    ZITADEL_CLIENT_ID = os.environ.get('ZITADEL_CLIENT_ID') or ''
+    ZITADEL_CLIENT_SECRET = os.environ.get('ZITADEL_CLIENT_SECRET') or ''
+    ZITADEL_REDIRECT_URI = os.environ.get('ZITADEL_REDIRECT_URI') or 'http://localhost:5000/auth/callback'
+    # Management API URL (z.B. https://your-zitadel-instance.com)
+    ZITADEL_MANAGEMENT_API_URL = os.environ.get('ZITADEL_MANAGEMENT_API_URL') or ''
+    # Management API Token (Service Account Token mit Berechtigung zum Erstellen von Benutzern)
+    ZITADEL_MANAGEMENT_API_TOKEN = os.environ.get('ZITADEL_MANAGEMENT_API_TOKEN') or ''
+    # Standard-Rolle für neue Benutzer (optional, muss in Zitadel konfiguriert sein)
+    ZITADEL_DEFAULT_ROLE = os.environ.get('ZITADEL_DEFAULT_ROLE') or 'coach'
 

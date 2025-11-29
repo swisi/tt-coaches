@@ -8,7 +8,8 @@ class User(UserMixin, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)  # Optional, da Zitadel Passwörter verwaltet
+    zitadel_user_id = db.Column(db.String(255), unique=True, nullable=True, index=True)  # Zitadel User ID
     full_name = db.Column(db.String(200))
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
@@ -28,9 +29,14 @@ class User(UserMixin, db.Model):
     experiences = db.relationship('Experience', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
     def set_password(self, password):
+        """Setzt ein Passwort (nur für Migration, normalerweise verwaltet Zitadel Passwörter)"""
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
+        """Prüft ein Passwort (nur für Migration, normalerweise verwaltet Zitadel Passwörter)"""
+        if not self.password_hash:
+            # Wenn kein password_hash vorhanden ist, wird der Benutzer über Zitadel authentifiziert
+            return False
         return check_password_hash(self.password_hash, password)
     
     def is_profile_complete(self):

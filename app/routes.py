@@ -24,19 +24,40 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def check_profile_complete():
-    """Prüft ob das Profil vollständig ist und leitet bei Bedarf um"""
-    if current_user.is_authenticated and not current_user.is_profile_complete():
-        if request.endpoint not in ['routes.profile', 'auth.logout']:
-            flash('Bitte vervollständige zuerst dein Profil.', 'warning')
-            return redirect(url_for('routes.profile'))
-    return None
-
 @bp.before_request
 def before_request():
     """Prüft Profilvollständigkeit vor jeder Anfrage"""
-    if current_user.is_authenticated:
-        check_profile_complete()
+    # Diese Funktion wird nur für Routen im 'routes' Blueprint aufgerufen
+    # Auth-Routen sind in einem separaten Blueprint und werden nicht geprüft
+    
+    # Nur prüfen wenn Benutzer eingeloggt ist
+    if not current_user.is_authenticated:
+        return None
+    
+    # WICHTIG: Profilseite und Auth-Routen komplett ausschließen
+    # Um Redirect-Schleifen zu vermeiden
+    if not request.endpoint:
+        return None
+    
+    # Auth-Routen ausschließen (sollten nicht hier landen, aber sicherheitshalber)
+    if request.endpoint.startswith('auth.'):
+        return None
+    
+    # Profilseite explizit ausschließen - hier darf der Benutzer sein Profil vervollständigen
+    if request.endpoint == 'routes.profile':
+        return None
+    
+    # Prüfe Profilvollständigkeit nur für andere Routen
+    # WICHTIG: Prüfe auch, ob wir bereits auf dem Weg zu Profile sind (verhindert Schleifen)
+    if not current_user.is_profile_complete():
+        # Prüfe ob wir bereits zu Profile weiterleiten (verhindert Endlosschleife)
+        profile_path = url_for('routes.profile')
+        if request.path != profile_path and request.path != profile_path.rstrip('/'):
+            current_app.logger.debug(f"before_request: Profile incomplete, redirecting from {request.endpoint} ({request.path}) to profile ({profile_path})")
+            flash('Bitte vervollständige zuerst dein Profil.', 'warning')
+            return redirect(profile_path)
+    
+    return None
 
 # Dashboard
 @bp.route('/')
@@ -93,8 +114,7 @@ def profile():
             current_user.team = form.team.data
             current_user.license_number = form.license_number.data or None
             
-            if form.new_password.data:
-                current_user.set_password(form.new_password.data)
+            # Passwort-Änderung wird über Zitadel verwaltet
             
             db.session.commit()
             flash('Profil erfolgreich aktualisiert.', 'success')
@@ -647,8 +667,7 @@ def admin_edit_coach(id):
         coach.license_number = form.license_number.data or None
         coach.is_admin = form.is_admin.data
         
-        if form.new_password.data:
-            coach.set_password(form.new_password.data)
+        # Passwort-Änderung wird über Zitadel verwaltet
         
         db.session.commit()
         flash('Coach erfolgreich aktualisiert.', 'success')
