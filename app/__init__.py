@@ -41,20 +41,27 @@ def create_app(config_class=Config):
     
     # Upload-Ordner erstellen
     import os
+    upload_folder = app.config.get('UPLOAD_FOLDER', 'app/static/uploads/certificates')
     try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(upload_folder, exist_ok=True)
+        app.logger.debug(f"Upload-Ordner erstellt/geprüft: {upload_folder}")
     except (OSError, PermissionError) as e:
-        # Falls das Verzeichnis nicht erstellt werden kann (z.B. read-only filesystem),
-        # versuche ein lokales Verzeichnis zu verwenden
-        upload_folder = app.config.get('UPLOAD_FOLDER', 'app/static/uploads/certificates')
-        if upload_folder.startswith('/app'):
-            # Fallback zu lokalem Verzeichnis
+        # Falls das Verzeichnis nicht erstellt werden kann
+        app.logger.warning(f"Konnte Upload-Ordner nicht erstellen: {upload_folder}, Fehler: {e}")
+        # Nur Fallback für lokale Entwicklung (nicht für Docker)
+        if not upload_folder.startswith('/app'):
+            # Lokale Entwicklung: Versuche Fallback
             local_upload_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'app', 'static', 'uploads', 'certificates')
             try:
                 os.makedirs(local_upload_folder, exist_ok=True)
                 app.config['UPLOAD_FOLDER'] = local_upload_folder
+                app.logger.info(f"Verwende Fallback Upload-Ordner: {local_upload_folder}")
             except (OSError, PermissionError):
+                app.logger.error(f"Konnte auch Fallback Upload-Ordner nicht erstellen: {local_upload_folder}")
                 pass  # Ignoriere Fehler, wenn auch das nicht funktioniert
+        else:
+            # Docker: Logge Warnung, aber ändere nicht den Pfad
+            app.logger.warning(f"Docker: Upload-Ordner {upload_folder} konnte nicht erstellt werden. Stelle sicher, dass das Volume korrekt gemountet ist.")
     
     # Datenbank-Verzeichnis erstellen (falls nicht vorhanden)
     db_uri = app.config['SQLALCHEMY_DATABASE_URI']

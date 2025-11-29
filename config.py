@@ -76,7 +76,21 @@ class Config:
             upload_base = basedir
         except (OSError, PermissionError):
             pass  # Ignoriere Fehler, wenn auch das nicht funktioniert
-    UPLOAD_FOLDER = os.path.join(upload_base, 'app', 'static', 'uploads', 'certificates')
+    
+    # Konstruiere UPLOAD_FOLDER basierend auf upload_base
+    # Docker: UPLOAD_BASE=/app, Volume ist auf /app/static/uploads gemountet
+    #         -> UPLOAD_FOLDER = /app/static/uploads/certificates
+    # Lokal: UPLOAD_BASE nicht gesetzt (basedir), z.B. /Users/swisi/Repos/tigers/coaches
+    #        -> UPLOAD_FOLDER = /Users/swisi/Repos/tigers/coaches/app/static/uploads/certificates
+    if upload_base == '/app':
+        # Docker-Container: Volume ist direkt auf /app/static/uploads gemountet
+        UPLOAD_FOLDER = os.path.join(upload_base, 'static', 'uploads', 'certificates')
+    elif os.path.isabs(upload_base) and upload_base != '/app':
+        # Andere absolute Pfade (z.B. lokale Entwicklung mit absolutem Pfad)
+        UPLOAD_FOLDER = os.path.join(upload_base, 'app', 'static', 'uploads', 'certificates')
+    else:
+        # Relative Pfade oder basedir (lokale Entwicklung)
+        UPLOAD_FOLDER = os.path.join(upload_base, 'app', 'static', 'uploads', 'certificates')
     # Max Upload-Größe: Standard 500MB (für große Backup-Dateien)
     # Kann über MAX_CONTENT_LENGTH Umgebungsvariable überschrieben werden (in Bytes)
     max_content_length = os.environ.get('MAX_CONTENT_LENGTH')
