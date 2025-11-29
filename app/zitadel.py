@@ -12,13 +12,26 @@ oauth = OAuth()
 
 def init_zitadel_oauth(app):
     """Initialisiert Zitadel OAuth2 Client"""
+    # Prüfe ob Zitadel-Konfiguration vorhanden ist
+    issuer = app.config.get('ZITADEL_ISSUER', '')
+    client_id = app.config.get('ZITADEL_CLIENT_ID', '')
+    client_secret = app.config.get('ZITADEL_CLIENT_SECRET', '')
+    
+    if not issuer or issuer == 'https://your-zitadel-instance.com' or not client_id or not client_secret:
+        app.logger.error("Zitadel-Konfiguration fehlt oder ist unvollständig!")
+        app.logger.error(f"ZITADEL_ISSUER: {issuer}")
+        app.logger.error(f"ZITADEL_CLIENT_ID: {'gesetzt' if client_id else 'FEHLT'}")
+        app.logger.error(f"ZITADEL_CLIENT_SECRET: {'gesetzt' if client_secret else 'FEHLT'}")
+        app.logger.error("Bitte setze die Zitadel-Umgebungsvariablen im Portainer Stack!")
+        raise ValueError("Zitadel-Konfiguration fehlt. Bitte setze ZITADEL_ISSUER, ZITADEL_CLIENT_ID und ZITADEL_CLIENT_SECRET als Umgebungsvariablen.")
+    
     oauth.init_app(app)
     
     oauth.register(
         name='zitadel',
-        client_id=app.config['ZITADEL_CLIENT_ID'],
-        client_secret=app.config['ZITADEL_CLIENT_SECRET'],
-        server_metadata_url=f"{app.config['ZITADEL_ISSUER']}/.well-known/openid-configuration",
+        client_id=client_id,
+        client_secret=client_secret,
+        server_metadata_url=f"{issuer}/.well-known/openid-configuration",
         client_kwargs={
             'scope': 'openid email profile urn:zitadel:iam:org:project:roles',
             'response_type': 'code'

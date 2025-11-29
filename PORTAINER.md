@@ -22,6 +22,14 @@ services:
       - DATABASE_URL=sqlite:////app/data/coaches.db
       - UPLOAD_BASE=/app
       - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-524288000}  # 500MB default (für große Backup-Dateien)
+      # Zitadel OAuth2/OIDC Konfiguration (ERFORDERLICH)
+      - ZITADEL_ISSUER=${ZITADEL_ISSUER:-https://tt-auth.swisi.net}
+      - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
+      - ZITADEL_CLIENT_SECRET=${ZITADEL_CLIENT_SECRET}
+      - ZITADEL_REDIRECT_URI=${ZITADEL_REDIRECT_URI:-https://tt-coaches.swisi.net/auth/callback}
+      - ZITADEL_MANAGEMENT_API_URL=${ZITADEL_MANAGEMENT_API_URL:-https://tt-auth.swisi.net}
+      - ZITADEL_MANAGEMENT_API_TOKEN=${ZITADEL_MANAGEMENT_API_TOKEN}
+      - ZITADEL_DEFAULT_ROLE=${ZITADEL_DEFAULT_ROLE:-coach}
     pull_policy: always
     volumes:
       # Datenbank-Persistenz
@@ -56,12 +64,19 @@ volumes:
 
 Du kannst folgende Umgebungsvariablen in Portainer setzen:
 
-| Variable | Beschreibung | Standard |
-|----------|-------------|----------|
-| `DOCKER_HUB_USERNAME` | Docker Hub Username | `swisi` |
-| `IMAGE_TAG` | Image Version | `latest` |
-| `SECRET_KEY` | Flask Secret Key | `change-me-in-production` |
-| `MAX_CONTENT_LENGTH` | Maximale Upload-Größe in Bytes | `524288000` (500MB) |
+| Variable | Beschreibung | Standard | Erforderlich |
+|----------|-------------|----------|--------------|
+| `DOCKER_HUB_USERNAME` | Docker Hub Username | `swisi` | Nein |
+| `IMAGE_TAG` | Image Version | `latest` | Nein |
+| `SECRET_KEY` | Flask Secret Key | `change-me-in-production` | **Ja** (in Produktion ändern!) |
+| `MAX_CONTENT_LENGTH` | Maximale Upload-Größe in Bytes | `524288000` (500MB) | Nein |
+| `ZITADEL_ISSUER` | Zitadel Instance URL | `https://tt-auth.swisi.net` | **Ja** |
+| `ZITADEL_CLIENT_ID` | OAuth2 Client ID | - | **Ja** |
+| `ZITADEL_CLIENT_SECRET` | OAuth2 Client Secret | - | **Ja** |
+| `ZITADEL_REDIRECT_URI` | OAuth2 Redirect URI | `https://tt-coaches.swisi.net/auth/callback` | **Ja** |
+| `ZITADEL_MANAGEMENT_API_URL` | Management API URL | `https://tt-auth.swisi.net` | **Ja** |
+| `ZITADEL_MANAGEMENT_API_TOKEN` | Management API Token | - | **Ja** |
+| `ZITADEL_DEFAULT_ROLE` | Standard-Rolle für neue Benutzer | `coach` | Nein |
 
 ### Volumes
 
