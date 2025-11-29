@@ -806,19 +806,32 @@ def serve_certificate_file(filename):
         upload_folder_abs = os.path.abspath(upload_folder)
         file_path_abs = os.path.abspath(file_path)
         
+        # Debug: Logge die verwendeten Pfade
+        current_app.logger.info(f"Suche Datei: {filename}")
+        current_app.logger.info(f"UPLOAD_FOLDER: {upload_folder_abs}")
+        current_app.logger.info(f"Datei-Pfad: {file_path_abs}")
+        current_app.logger.info(f"UPLOAD_BASE aus Config: {current_app.config.get('UPLOAD_BASE', 'NICHT GESETZT')}")
+        
         # Sicherheitsprüfung: Stelle sicher, dass die Datei im Upload-Ordner ist
         if not file_path_abs.startswith(upload_folder_abs):
             current_app.logger.warning(f"Versuch, Datei außerhalb des Upload-Ordners zu laden: {file_path_abs}")
             abort(403)
         
         if os.path.exists(file_path):
-            current_app.logger.debug(f"Serviere Datei: {file_path}")
+            current_app.logger.info(f"Datei gefunden, serviere: {file_path}")
             return send_file(file_path)
         else:
-            current_app.logger.warning(f"Datei nicht gefunden: {file_path} (Upload-Ordner: {upload_folder_abs})")
+            current_app.logger.warning(f"Datei nicht gefunden: {file_path}")
             # Prüfe ob das Verzeichnis existiert
             if not os.path.exists(upload_folder):
                 current_app.logger.error(f"Upload-Ordner existiert nicht: {upload_folder_abs}")
+            else:
+                # Liste Dateien im Verzeichnis für Debugging
+                try:
+                    files_in_dir = os.listdir(upload_folder)
+                    current_app.logger.info(f"Dateien im Upload-Ordner: {files_in_dir[:10]}")  # Erste 10 Dateien
+                except Exception as e:
+                    current_app.logger.error(f"Konnte Upload-Ordner nicht lesen: {e}")
             abort(404)
     except Exception as e:
         current_app.logger.error(f"Fehler beim Servieren der Datei {filename}: {str(e)}", exc_info=True)
