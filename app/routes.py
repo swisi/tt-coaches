@@ -389,8 +389,9 @@ def copy_training_plan(id):
             db.session.add(new_plan)
             db.session.flush()  # Um die ID zu erhalten
             
-            # Aktivitäten kopieren
-            for activity in original_plan.activities.all():
+            # Aktivitäten kopieren - zunächst mit temporären Zeiten (Original-Zeiten)
+            # Diese werden später basierend auf dem neuen Plan-Startzeitpunkt neu berechnet
+            for activity in original_plan.activities.order_by(TrainingActivity.order).all():
                 # Kopiere groups und group_activities sicher (JSON-Felder)
                 groups_copy = None
                 if activity.groups:
@@ -416,11 +417,15 @@ def copy_training_plan(id):
                         else:
                             group_activities_copy = activity.group_activities
                 
+                # Erstelle Aktivität mit temporären Zeiten (werden später neu berechnet)
+                # Verwende die Original-Zeiten als Fallback, falls Berechnung fehlschlägt
                 new_activity = TrainingActivity(
                     plan_id=new_plan.id,
                     activity_name=activity.activity_name,
                     activity_type=activity.activity_type,
                     duration_minutes=activity.duration_minutes,
+                    time_from=activity.time_from,  # Temporär: Original-Zeit (wird später neu berechnet)
+                    time_to=activity.time_to,  # Temporär: Original-Zeit (wird später neu berechnet)
                     groups=groups_copy,
                     group_activities=group_activities_copy,
                     notes=activity.notes,
@@ -428,9 +433,17 @@ def copy_training_plan(id):
                 )
                 db.session.add(new_activity)
             
-            # Zeiten neu berechnen
-            new_plan.activities = TrainingActivity.query.filter_by(plan_id=new_plan.id).all()
-            calculate_activity_times(new_plan, new_plan.activities)
+            # Flush, um IDs zu erhalten
+            db.session.flush()
+            
+            # Zeiten neu berechnen basierend auf dem neuen Plan-Startzeitpunkt
+            # Hole die neu erstellten Aktivitäten und berechne die Zeiten
+            new_plan_activities = TrainingActivity.query.filter_by(plan_id=new_plan.id).order_by(TrainingActivity.order)
+            calculate_activity_times(new_plan, new_plan_activities)
+            
+            # Die calculate_activity_times Funktion modifiziert die Aktivitäten direkt,
+            # daher müssen wir nur nochmal flush() aufrufen, um die Änderungen zu speichern
+            db.session.flush()
             
             db.session.commit()
             flash('Trainingsplan erfolgreich kopiert.', 'success')
