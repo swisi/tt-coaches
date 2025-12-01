@@ -18,17 +18,68 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile Menu Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const sidebar = document.getElementById('sidebar');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+    
+    function toggleMobileMenu() {
+        const isOpen = sidebar.classList.contains('open');
+        if (isOpen) {
+            sidebar.classList.remove('open');
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.classList.add('hidden');
+            }
+        } else {
+            sidebar.classList.add('open');
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.classList.remove('hidden');
+            }
+        }
+    }
+    
+    function closeMobileMenu() {
+        sidebar.classList.remove('open');
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.classList.add('hidden');
+        }
+    }
     
     if (mobileMenuBtn && sidebar) {
-        mobileMenuBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('open');
+        // Toggle Menu beim Klick auf Button
+        mobileMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMobileMenu();
         });
+        
+        // Schließe Menu beim Klick auf Overlay
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.addEventListener('click', function() {
+                closeMobileMenu();
+            });
+        }
         
         // Schließe Menu beim Klick außerhalb
         document.addEventListener('click', function(event) {
-            if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
-                sidebar.classList.remove('open');
+            const isClickInsideSidebar = sidebar.contains(event.target);
+            const isClickOnMenuBtn = mobileMenuBtn.contains(event.target);
+            const isClickOnOverlay = mobileMenuOverlay && mobileMenuOverlay.contains(event.target);
+            
+            if (!isClickInsideSidebar && !isClickOnMenuBtn && !isClickOnOverlay && sidebar.classList.contains('open')) {
+                closeMobileMenu();
             }
+        });
+        
+        // Verhindere Event-Bubbling beim Klick innerhalb der Sidebar
+        sidebar.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Schließe Menu beim Klick auf einen Link (für bessere UX)
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    closeMobileMenu();
+                }
+            });
         });
     }
     

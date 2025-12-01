@@ -3,24 +3,25 @@
 {% block title %}Trainingspläne - CoachManager{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold">Trainingspläne</h1>
+<div class="space-y-4 md:space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl sm:text-3xl font-bold">Trainingspläne</h1>
         {% if current_user.is_admin %}
         <a href="{{ url_for('routes.new_training_plan') }}" 
-           class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium flex items-center justify-center"
+           class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 w-full sm:w-auto"
            title="Neuer Trainingsplan">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
+            <span class="sm:hidden">Neuer Trainingsplan</span>
         </a>
         {% endif %}
     </div>
     
     {% if plans %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {% for plan in plans %}
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 md:p-6 border-l-4 
                     {% if plan.weekday == 0 %}border-blue-500{% elif plan.weekday == 1 %}border-green-500{% elif plan.weekday == 2 %}border-purple-500{% elif plan.weekday == 3 %}border-amber-500{% elif plan.weekday == 4 %}border-pink-500{% elif plan.weekday == 5 %}border-cyan-500{% else %}border-red-500{% endif %}">
             {% if plan.is_active_today() %}
             <div class="mb-2">
@@ -28,52 +29,57 @@
             </div>
             {% endif %}
             
-            <h3 class="text-xl font-bold mb-2">{{ plan.title }}</h3>
-            <p class="text-slate-600 dark:text-slate-400 mb-2">
+            <h3 class="text-lg md:text-xl font-bold mb-2 break-words">{{ plan.title }}</h3>
+            <p class="text-sm md:text-base text-slate-600 dark:text-slate-400 mb-2">
                 {{ plan.get_weekday_name() }} • {{ plan.start_time.strftime('%H:%M') }} Uhr
             </p>
-            <p class="text-sm text-slate-500 dark:text-slate-500 mb-4">
+            <p class="text-xs md:text-sm text-slate-500 dark:text-slate-500 mb-4">
                 {{ plan.start_date.strftime('%d.%m.%Y') }} - {{ plan.end_date.strftime('%d.%m.%Y') }}
                 <br>{{ plan.team_name }}
             </p>
             
-            <div class="flex gap-2">
+            <div class="flex flex-col sm:flex-row gap-2">
                 <a href="{{ url_for('routes.training_plan_detail', id=plan.id) }}" 
-                   class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm text-center">
+                   class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm text-center transition-colors">
                     Details
                 </a>
                 {% if current_user.is_admin %}
-                <a href="{{ url_for('routes.edit_training_plan', id=plan.id) }}" 
-                   class="px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-sm flex items-center justify-center"
-                   title="Bearbeiten">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                </a>
-                <form method="POST" action="{{ url_for('routes.delete_training_plan', id=plan.id) }}" 
-                      onsubmit="return confirm('Möchtest du diesen Trainingsplan wirklich löschen?');" class="inline">
-                    <button type="submit" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm flex items-center justify-center"
-                            title="Löschen">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('routes.edit_training_plan', id=plan.id) }}" 
+                       class="flex-1 sm:flex-none px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-sm flex items-center justify-center transition-colors"
+                       title="Bearbeiten">
+                        <svg class="w-4 h-4 sm:block hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
-                    </button>
-                </form>
+                        <span class="sm:hidden text-xs">Bearbeiten</span>
+                    </a>
+                    <form method="POST" action="{{ url_for('routes.delete_training_plan', id=plan.id) }}" 
+                          onsubmit="return confirm('Möchtest du diesen Trainingsplan wirklich löschen?');" class="inline flex-1 sm:flex-none">
+                        <button type="submit" class="w-full sm:w-auto px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm flex items-center justify-center transition-colors"
+                                title="Löschen">
+                            <svg class="w-4 h-4 sm:block hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            <span class="sm:hidden text-xs">Löschen</span>
+                        </button>
+                    </form>
+                </div>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-12 text-center">
-        <p class="text-slate-500 dark:text-slate-400 mb-4">Noch keine Trainingspläne vorhanden.</p>
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 md:p-12 text-center">
+        <p class="text-slate-500 dark:text-slate-400 mb-4 text-sm md:text-base">Noch keine Trainingspläne vorhanden.</p>
         {% if current_user.is_admin %}
         <a href="{{ url_for('routes.new_training_plan') }}" 
-           class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium inline-flex items-center justify-center"
+           class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium inline-flex items-center justify-center gap-2 transition-colors"
            title="Ersten Trainingsplan erstellen">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
+            <span>Ersten Trainingsplan erstellen</span>
         </a>
         {% endif %}
     </div>
