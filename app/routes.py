@@ -11,6 +11,7 @@ from datetime import datetime, date, time, timedelta
 import csv
 import io
 import os
+import copy
 
 bp = Blueprint('routes', __name__)
 
@@ -368,53 +369,87 @@ def delete_training_plan(id):
 @login_required
 @admin_required
 def copy_training_plan(id):
-    original_plan = TrainingPlan.query.get_or_404(id)
-    form = TrainingPlanForm()
-    
-    if request.method == 'POST' and form.validate():
-        # Neuen Plan erstellen
-        new_plan = TrainingPlan(
-            title=form.title.data or f"{original_plan.title} (Kopie)",
-            team_name=form.team_name.data or original_plan.team_name,
-            start_date=form.start_date.data or original_plan.start_date,
-            end_date=form.end_date.data or original_plan.end_date,
-            weekday=form.weekday.data,
-            start_time=form.start_time.data or original_plan.start_time,
-            dresscode=original_plan.dresscode,
-            focus=original_plan.focus,
-            goals=original_plan.goals
-        )
-        db.session.add(new_plan)
-        db.session.flush()  # Um die ID zu erhalten
+    try:
+        original_plan = TrainingPlan.query.get_or_404(id)
+        form = TrainingPlanForm()
         
-        # Aktivitäten kopieren
-        for activity in original_plan.activities.all():
-            new_activity = TrainingActivity(
-                plan_id=new_plan.id,
-                activity_name=activity.activity_name,
-                activity_type=activity.activity_type,
-                duration_minutes=activity.duration_minutes,
-                groups=activity.groups.copy() if activity.groups else None,
-                notes=activity.notes,
-                order=activity.order
+        if request.method == 'POST' and form.validate():
+            # Neuen Plan erstellen
+            new_plan = TrainingPlan(
+                title=form.title.data or f"{original_plan.title} (Kopie)",
+                team_name=form.team_name.data or original_plan.team_name,
+                start_date=form.start_date.data or original_plan.start_date,
+                end_date=form.end_date.data or original_plan.end_date,
+                weekday=form.weekday.data if form.weekday.data is not None else original_plan.weekday,
+                start_time=form.start_time.data or original_plan.start_time,
+                dresscode=original_plan.dresscode,
+                focus=original_plan.focus,
+                goals=original_plan.goals
             )
-            db.session.add(new_activity)
+            db.session.add(new_plan)
+            db.session.flush()  # Um die ID zu erhalten
+            
+            # Aktivitäten kopieren
+            for activity in original_plan.activities.all():
+                # Kopiere groups und group_activities sicher (JSON-Felder)
+                groups_copy = None
+                if activity.groups:
+                    try:
+                        groups_copy = copy.deepcopy(activity.groups)
+                    except Exception as e:
+                        current_app.logger.error(f"Fehler beim Kopieren von groups: {e}")
+                        # Fallback: Versuche einfaches Kopieren
+                        if isinstance(activity.groups, dict):
+                            groups_copy = activity.groups.copy()
+                        else:
+                            groups_copy = activity.groups
+                
+                group_activities_copy = None
+                if activity.group_activities:
+                    try:
+                        group_activities_copy = copy.deepcopy(activity.group_activities)
+                    except Exception as e:
+                        current_app.logger.error(f"Fehler beim Kopieren von group_activities: {e}")
+                        # Fallback: Versuche einfaches Kopieren
+                        if isinstance(activity.group_activities, dict):
+                            group_activities_copy = activity.group_activities.copy()
+                        else:
+                            group_activities_copy = activity.group_activities
+                
+                new_activity = TrainingActivity(
+                    plan_id=new_plan.id,
+                    activity_name=activity.activity_name,
+                    activity_type=activity.activity_type,
+                    duration_minutes=activity.duration_minutes,
+                    groups=groups_copy,
+                    group_activities=group_activities_copy,
+                    notes=activity.notes,
+                    order=activity.order
+                )
+                db.session.add(new_activity)
+            
+            # Zeiten neu berechnen
+            new_plan.activities = TrainingActivity.query.filter_by(plan_id=new_plan.id).all()
+            calculate_activity_times(new_plan, new_plan.activities)
+            
+            db.session.commit()
+            flash('Trainingsplan erfolgreich kopiert.', 'success')
+            return redirect(url_for('routes.training_plan_detail', id=new_plan.id))
         
-        # Zeiten neu berechnen
-        new_plan.activities = TrainingActivity.query.filter_by(plan_id=new_plan.id).all()
-        calculate_activity_times(new_plan, new_plan.activities)
+        # Formular mit Original-Daten vorausfüllen
+        form.team_name.data = original_plan.team_name
+        form.start_date.data = original_plan.start_date
+        form.end_date.data = original_plan.end_date
+        form.weekday.data = original_plan.weekday
+        form.start_time.data = original_plan.start_time
         
-        db.session.commit()
-        flash('Trainingsplan erfolgreich kopiert.', 'success')
-        return redirect(url_for('routes.training_plan_detail', id=new_plan.id))
+        return render_template('training_plan_form.html', form=form, title='Trainingsplan kopieren', copy=True)
     
-    # Formular mit Original-Daten vorausfüllen
-    form.team_name.data = original_plan.team_name
-    form.start_date.data = original_plan.start_date
-    form.end_date.data = original_plan.end_date
-    form.start_time.data = original_plan.start_time
-    
-    return render_template('training_plan_form.html', form=form, title='Trainingsplan kopieren', copy=True)
+    except Exception as e:
+        current_app.logger.error(f"Fehler beim Kopieren des Trainingsplans {id}: {str(e)}", exc_info=True)
+        db.session.rollback()
+        flash(f'Fehler beim Kopieren des Trainingsplans: {str(e)}', 'error')
+        return redirect(url_for('routes.training_plan_detail', id=id))
 
 # Aktivitäten
 @bp.route('/training-plans/<int:plan_id>/activities/new', methods=['GET', 'POST'])
