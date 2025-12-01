@@ -76,10 +76,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const sidebarLinks = sidebar.querySelectorAll('a');
         sidebarLinks.forEach(function(link) {
             link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
+                // Prüfe ob Mobile Menu aktiv sein sollte (Portrait oder sehr schmal)
+                const isMobile = window.innerWidth <= 1024 && 
+                                 (window.innerHeight > window.innerWidth || window.innerWidth <= 768);
+                if (isMobile) {
                     closeMobileMenu();
                 }
             });
+        });
+        
+        // Schließe Menu automatisch bei Orientierungswechsel zu Landscape
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                // Wenn im Landscape-Modus (Breite > Höhe), schließe Menu
+                if (window.innerWidth > window.innerHeight && window.innerWidth >= 769) {
+                    closeMobileMenu();
+                }
+            }, 100);
+        });
+        
+        // Schließe Menu auch bei Resize, wenn zu Landscape gewechselt wird
+        window.addEventListener('resize', function() {
+            // Wenn im Landscape-Modus (Breite > Höhe) und breit genug, schließe Menu
+            if (window.innerWidth > window.innerHeight && window.innerWidth >= 769) {
+                closeMobileMenu();
+            }
         });
     }
     
@@ -161,4 +182,5 @@ window.CoachManager = {
     getCurrentTime: getCurrentTime,
     initDragAndDrop: initDragAndDrop
 };
+
 

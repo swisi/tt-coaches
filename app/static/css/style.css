@@ -36,8 +36,8 @@
     background: #64748b;
 }
 
-/* Mobile Menu */
-@media (max-width: 768px) {
+/* Mobile Menu - Nur im Portrait-Modus oder bei sehr schmalen Bildschirmen */
+@media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
     #sidebar {
         position: fixed;
         left: -100%;
@@ -65,6 +65,29 @@
     
     #mobile-menu-overlay:not(.hidden) {
         display: block;
+    }
+}
+
+/* Im Querformat oder bei größeren Bildschirmen: Sidebar immer sichtbar (wie Desktop) */
+@media (min-width: 769px) and (orientation: landscape), 
+       (min-width: 1025px),
+       (min-width: 769px) and (min-height: 600px) {
+    #sidebar {
+        position: relative !important;
+        left: 0 !important;
+        display: flex !important;
+    }
+    
+    #mobile-menu-btn {
+        display: none !important;
+    }
+    
+    #mobile-menu-overlay {
+        display: none !important;
+    }
+    
+    #sidebar.open {
+        left: 0 !important;
     }
 }
 
