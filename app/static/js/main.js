@@ -77,31 +77,46 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebarLinks.forEach(function(link) {
             link.addEventListener('click', function() {
                 // Prüfe ob Mobile Menu aktiv sein sollte (Portrait oder sehr schmal)
-                const isMobile = window.innerWidth <= 1024 && 
-                                 (window.innerHeight > window.innerWidth || window.innerWidth <= 768);
-                if (isMobile) {
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const isNarrow = window.innerWidth <= 1024;
+                if (isPortrait && isNarrow) {
                     closeMobileMenu();
                 }
             });
         });
         
+        // Funktion zum Prüfen der Orientierung und Schließen des Menus
+        function checkOrientationAndCloseMenu() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            const isWide = window.innerWidth >= 769;
+            
+            // Wenn im Landscape-Modus, schließe Menu und verstecke Button
+            if (isLandscape || isWide) {
+                closeMobileMenu();
+                // Stelle sicher, dass Sidebar sichtbar ist
+                sidebar.classList.remove('open');
+                sidebar.style.left = '0';
+            }
+        }
+        
         // Schließe Menu automatisch bei Orientierungswechsel zu Landscape
         window.addEventListener('orientationchange', function() {
             setTimeout(function() {
-                // Wenn im Landscape-Modus (Breite > Höhe), schließe Menu
-                if (window.innerWidth > window.innerHeight && window.innerWidth >= 769) {
-                    closeMobileMenu();
-                }
+                checkOrientationAndCloseMenu();
             }, 100);
         });
         
         // Schließe Menu auch bei Resize, wenn zu Landscape gewechselt wird
+        let resizeTimeout;
         window.addEventListener('resize', function() {
-            // Wenn im Landscape-Modus (Breite > Höhe) und breit genug, schließe Menu
-            if (window.innerWidth > window.innerHeight && window.innerWidth >= 769) {
-                closeMobileMenu();
-            }
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                checkOrientationAndCloseMenu();
+            }, 100);
         });
+        
+        // Initiale Prüfung beim Laden
+        checkOrientationAndCloseMenu();
     }
     
     // Auto-hide Flash Messages (nur Nachrichten, keine Buttons)
