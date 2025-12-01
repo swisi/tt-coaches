@@ -136,13 +136,44 @@ def create_backup_zip():
         
         # Füge alle hochgeladenen Zertifikatsdateien hinzu
         upload_folder = current_app.config['UPLOAD_FOLDER']
+        current_app.logger.info(f"Backup: Suche Dateien in {upload_folder}")
+        
         if os.path.exists(upload_folder):
-            for root, dirs, files in os.walk(upload_folder):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    # Relativer Pfad innerhalb des ZIPs
-                    arcname = os.path.relpath(file_path, os.path.dirname(upload_folder))
-                    zip_file.write(file_path, arcname=f'uploads/{arcname}')
+            files_added = 0
+            upload_base_dir = os.path.dirname(upload_folder)  # z.B. /app/static/uploads
+            
+            try:
+                for root, dirs, files in os.walk(upload_folder):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        
+                        # Prüfe ob Datei wirklich existiert und lesbar ist
+                        if not os.path.isfile(file_path):
+                            current_app.logger.warning(f"Backup: Überspringe {file_path} (keine Datei)")
+                            continue
+                        
+                        # Relativer Pfad innerhalb des ZIPs
+                        # z.B. upload_folder = /app/static/uploads/certificates
+                        #      upload_base_dir = /app/static/uploads
+                        #      file_path = /app/static/uploads/certificates/file.pdf
+                        #      arcname = certificates/file.pdf
+                        try:
+                            arcname = os.path.relpath(file_path, upload_base_dir)
+                            zip_file.write(file_path, arcname=f'uploads/{arcname}')
+                            files_added += 1
+                            current_app.logger.debug(f"Backup: Datei hinzugefügt: {file_path} -> uploads/{arcname}")
+                        except Exception as e:
+                            current_app.logger.error(f"Backup: Fehler beim Hinzufügen von {file_path}: {e}")
+                            continue
+                
+                if files_added == 0:
+                    current_app.logger.warning(f"Backup: Keine Dateien im Upload-Ordner gefunden: {upload_folder}")
+                else:
+                    current_app.logger.info(f"Backup: {files_added} Dateien zum ZIP hinzugefügt")
+            except Exception as e:
+                current_app.logger.error(f"Backup: Fehler beim Durchsuchen des Upload-Ordners: {e}")
+        else:
+            current_app.logger.warning(f"Backup: Upload-Ordner existiert nicht: {upload_folder}")
     
     zip_buffer.seek(0)
     return zip_buffer
