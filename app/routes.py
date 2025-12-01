@@ -389,8 +389,9 @@ def copy_training_plan(id):
             db.session.add(new_plan)
             db.session.flush()  # Um die ID zu erhalten
             
-            # Aktivitäten kopieren - zunächst mit temporären Zeiten (Original-Zeiten)
-            # Diese werden später basierend auf dem neuen Plan-Startzeitpunkt neu berechnet
+            # Aktivitäten kopieren - zunächst im Speicher sammeln
+            # Zeiten werden berechnet, bevor sie zur Datenbank hinzugefügt werden
+            new_activities_list = []
             for activity in original_plan.activities.order_by(TrainingActivity.order).all():
                 # Kopiere groups und group_activities sicher (JSON-Felder)
                 groups_copy = None
@@ -417,32 +418,43 @@ def copy_training_plan(id):
                         else:
                             group_activities_copy = activity.group_activities
                 
-                # Erstelle Aktivität mit temporären Zeiten (werden später neu berechnet)
-                # Verwende die Original-Zeiten als Fallback, falls Berechnung fehlschlägt
+                # Erstelle Aktivität-Objekt im Speicher (noch nicht in DB)
+                # Verwende Standard-Zeiten als Platzhalter (werden gleich berechnet)
                 new_activity = TrainingActivity(
                     plan_id=new_plan.id,
                     activity_name=activity.activity_name,
                     activity_type=activity.activity_type,
                     duration_minutes=activity.duration_minutes,
-                    time_from=activity.time_from,  # Temporär: Original-Zeit (wird später neu berechnet)
-                    time_to=activity.time_to,  # Temporär: Original-Zeit (wird später neu berechnet)
+                    time_from=time(0, 0),  # Platzhalter - wird gleich berechnet
+                    time_to=time(0, 0),  # Platzhalter - wird gleich berechnet
                     groups=groups_copy,
                     group_activities=group_activities_copy,
                     notes=activity.notes,
                     order=activity.order
                 )
-                db.session.add(new_activity)
+                new_activities_list.append(new_activity)
             
-            # Flush, um IDs zu erhalten
-            db.session.flush()
+            # Zeiten berechnen BEVOR die Aktivitäten zur Datenbank hinzugefügt werden
+            # Erstelle eine temporäre Query-ähnliche Struktur für calculate_activity_times
+            class ActivitiesList:
+                """Hilfsklasse, die wie eine Query funktioniert"""
+                def __init__(self, activities):
+                    self._activities = sorted(activities, key=lambda x: x.order)
+                
+                def order_by(self, *args):
+                    return self  # Sortierung ist bereits gemacht
+                
+                def all(self):
+                    return self._activities
             
-            # Zeiten neu berechnen basierend auf dem neuen Plan-Startzeitpunkt
-            # Hole die neu erstellten Aktivitäten und berechne die Zeiten
-            new_plan_activities = TrainingActivity.query.filter_by(plan_id=new_plan.id).order_by(TrainingActivity.order)
-            calculate_activity_times(new_plan, new_plan_activities)
+            activities_query = ActivitiesList(new_activities_list)
+            calculate_activity_times(new_plan, activities_query)
             
-            # Die calculate_activity_times Funktion modifiziert die Aktivitäten direkt,
-            # daher müssen wir nur nochmal flush() aufrufen, um die Änderungen zu speichern
+            # Jetzt alle Aktivitäten mit berechneten Zeiten zur Datenbank hinzufügen
+            for activity in new_activities_list:
+                db.session.add(activity)
+            
+            # Flush, um alle Aktivitäten zu speichern
             db.session.flush()
             
             db.session.commit()
