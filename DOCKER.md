@@ -60,7 +60,7 @@ docker run -d \
   --name coaches-app \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
-  -v $(pwd)/uploads:/app/app/static/uploads \
+  -v $(pwd)/uploads:/app/static/uploads \
   -e SECRET_KEY="dein-sicheres-secret-key" \
   coaches-app
 ```

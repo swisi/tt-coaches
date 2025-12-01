@@ -35,7 +35,7 @@ services:
       # Datenbank-Persistenz
       - coaches-data:/app/data
       # Upload-Dateien
-      - coaches-uploads:/app/app/static/uploads
+      - coaches-uploads:/app/static/uploads
       # Instance-Config
       - coaches-instance:/app/instance
     restart: unless-stopped
@@ -143,7 +143,7 @@ DATABASE_URL=sqlite:////app/data/coaches.db
 1. Prüfe, ob das Volume `coaches-uploads` existiert und Dateien enthält:
    ```bash
    docker volume inspect coaches-uploads
-   docker exec coaches-app ls -la /app/app/static/uploads/certificates/
+   docker exec coaches-app ls -la /app/static/uploads/certificates/
    ```
 2. Nach einem Restore: Stelle sicher, dass die Dateien korrekt extrahiert wurden
 3. Die Anwendung hat jetzt eine explizite Route zum Servieren von Dateien - nach dem nächsten Update sollte das Problem behoben sein

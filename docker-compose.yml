@@ -18,7 +18,7 @@ services:
       # Datenbank-Persistenz
       - ./data:/app/data
       # Upload-Dateien
-      - ./uploads:/app/app/static/uploads
+      - ./uploads:/app/static/uploads
       # Instance-Config
       - ./instance:/app/instance
     restart: unless-stopped
